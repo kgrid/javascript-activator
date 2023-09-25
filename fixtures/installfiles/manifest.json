@@ -1,28 +1,26 @@
 [
-  { 
-      "@id": "python/simple/v1.0",
-      "url": "python-simple-v1-0.zip"
+  {
+    "@id": "python/simple/v1.0",
+    "url": "python-simple-v1-0.zip"
   },
-  { 
-      "@id": "python/multiartifact/v1.0",
-      "url": "https://github.com/kgrid/python-activator/releases/download/0.6/python-multiartifact-v1-0.zip"
+  {
+    "@id": "python/multiartifact/v1.0",
+    "url": "https://github.com/kgrid/python-activator/releases/download/0.6/python-multiartifact-v1-0.zip"
   },
-  { 
-      "@id": "python/multimime/v1.0",
-      "url": "https://github.com/kgrid/python-activator/releases/download/0.6/python-multimime-v1-0.zip"
+  {
+    "@id": "python/multimime/v1.0",
+    "url": "https://github.com/kgrid/python-activator/releases/download/0.6/python-multimime-v1-0.zip"
   },
-  { 
-      "@id": "bmi/calculator/v1.0",
-      "url": "https://github.com/kgrid/python-activator/releases/download/0.6/bmi-calculator.zip"
-  }
-  ,
-  { 
-      "@id": "calorie/calculator/v1.0",
-      "url": "https://github.com/kgrid/python-activator/releases/download/0.6/calorie-calculator.zip"
-  }
-  ,
-  { 
-      "@id": "nonExistent",
-      "url": "nonExistent.zip"
+  {
+    "@id": "bmi/calculator/v1.0",
+    "url": "https://github.com/kgrid/python-activator/releases/download/0.6/bmi-calculator.zip"
+  },
+  {
+    "@id": "calorie/calculator/v1.0",
+    "url": "https://github.com/kgrid/python-activator/releases/download/0.6/calorie-calculator.zip"
+  },
+  {
+    "@id": "nonExistent",
+    "url": "nonExistent.zip"
   }
 ]

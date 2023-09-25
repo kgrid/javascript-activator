@@ -17,10 +17,10 @@ or
 ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.json deno run -A manifest.ts
 ```
 
-
 before pushing commits run the follwoing commands:
+
 ```
- deno fmt
- deno lint
- deno test
+deno fmt
+deno lint
+deno test
 ```

@@ -1,3 +1,4 @@
+import { dirname } from "https://deno.land/std@0.202.0/path/dirname.ts";
 import { writeAll } from "https://deno.land/std@0.202.0/streams/write_all.ts";
 export function getFilenameFromURL(urlString: string): string {
   try {
@@ -29,6 +30,16 @@ export async function download(
   source: string,
   destination: string,
 ): Promise<void> {
+  //create cache folder if does not exist
+  if (!await Deno.stat(dirname(destination)).catch(() => null)) {
+    // The folder does not exist, so we can create it.
+    try {
+      await Deno.mkdir(dirname(destination));
+    } catch (error) {
+      console.error(`Error creating cache folder: ${error}`);      
+    }
+  }
+
   // We use browser fetch API
   const response = await fetch(source);
   const blob = await response.blob();

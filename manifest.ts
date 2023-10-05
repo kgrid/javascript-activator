@@ -10,11 +10,12 @@ import {
 
 let manifest_path = "";
 let collection_path = "./pyshelf";
+let local_manifest: [{ [key: string]: string }] = [{}];
 
 /**
  * reads and returns content of manifet file
  */
-async function get_Manifest() { //works with remote or local path (relative or absolute)
+async function get_Manifest(): Promise<[{ [key: string]: string }]> { //works with remote or local path (relative or absolute)
   try {
     if (isLocalPathOrURL(manifest_path)) { //local manifest
       const fileContent = await Deno.readFile(manifest_path);
@@ -33,75 +34,116 @@ async function get_Manifest() { //works with remote or local path (relative or a
   } catch (error) {
     console.error("Error:", error);
   }
-  return {};
+  return [{}];
 }
 
 /**
- * loads ko at itemLocation, downloads and unzips if needed
+ * loads ko at koItem.url, downloads and unzips if needed
  */
-async function loadKO(itemLocation: string) {
-  //resolve itemLocation
-  if (!path.isAbsolute(itemLocation) && !isURL(itemLocation)) { //if itemLocation is relative, need to resolve towards manifest path
+async function loadKO(koItem: Record<string, string>) {
+  //resolve koItem.url
+  if (!path.isAbsolute(koItem.url) && !isURL(koItem.url)) { //if koItem.url is relative, need to resolve towards manifest path
     if (isLocalPathOrURL(manifest_path)) {
-      itemLocation = resolveRelativeURL(
+      koItem.url = resolveRelativeURL(
         path.toFileUrl(manifest_path).href,
-        itemLocation,
+        koItem.url,
       ); //make manifest path a uri so that it could be resolved
-    } else itemLocation = resolveRelativeURL(manifest_path, itemLocation);
+    } else koItem.url = resolveRelativeURL(manifest_path, koItem.url);
   }
 
-  //Download to localLocationif not local
-  let localLocation = itemLocation;
+  //Download to localLocation if not local
+  let localLocation = koItem.url;
+  let metadata:  Record<string, string>= { "@id": koItem["@id"], "status": "uninitialized" };
+  const cacheFolder = collection_path + "/" +
+    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), "");  
+
   try {
-    if (!isLocalPathOrURL(itemLocation)) {
-      localLocation = collection_path + "/" + getFilenameFromURL(itemLocation);
-      await download(itemLocation, localLocation);
+    if (!isLocalPathOrURL(koItem.url)) {
+      localLocation = collection_path + "/" + getFilenameFromURL(koItem.url);
+      await download(koItem.url, localLocation);
     } else {
       localLocation = path.fromFileUrl(localLocation);
     }
 
     //unzip if local file exist and ko does not exist in cache
-    const cacheFolder = collection_path + "/" +
-      getFilenameFromURL(itemLocation).replace(path.extname(itemLocation), "");
     if (existsSync(localLocation) && !existsSync(cacheFolder)) {
       await unzip(localLocation, collection_path);
     }
+
+    metadata = JSON.parse(
+      Deno.readTextFileSync(cacheFolder + "/metadata.json"),
+    );
+    metadata.status = "loaded";
   } catch (error) {
     console.error(
       "Error loading ko at ",
-      itemLocation,
+      koItem.url,
       ". error: ",
       error.message,
     );
+    metadata.error = error.message;
+  }
+
+  metadata["local_url"] = cacheFolder;
+  metadata["url"] = koItem.url;
+  if (local_manifest[0]["@id"] == undefined) {
+    local_manifest = [metadata];
+  } else {
+    local_manifest.push(metadata);
   }
 }
 
+/**
+ * install ko from koItem.local_url
+ */
+async function installKO(koItem: Record<string, string>) {
+  await console.log(koItem.local_url);
+}
+
 async function main() {
+  //set collection path
   collection_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
   if (collection_path == "" || undefined) {
     collection_path = "./pyshelf";
   }
 
+  //set manifest path
   manifest_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH") ?? "";
   if (manifest_path == "" || undefined) {
     console.log(`ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH is not defined.`);
-  } else {
-    if (!path.isAbsolute(manifest_path) && isLocalPathOrURL(manifest_path)) {
-      manifest_path = path.resolve(manifest_path); //used to support relative manifest path
-    }
-    console.log(manifest_path);
+    return;
+  }
+  if (!path.isAbsolute(manifest_path) && isLocalPathOrURL(manifest_path)) {
+    manifest_path = path.resolve(manifest_path); //used to support relative manifest path
+  }
 
-    try {
-      const manifest = await get_Manifest();
-      for (const item of manifest) { //for each ko in manifest load them
-        console.log("loading " + item.url);
-        loadKO(item.url);
-      }
-    } catch (error) {
-      console.error("An error occurred:", error);
+  try {
+    //load
+    console.log("Loading from maniefest at", manifest_path);
+    let manifest = await get_Manifest();
+    for (const item of manifest) { //for each ko in manifest load them
+      console.log("loading " + item.url);
+      await loadKO(item);
     }
+    
+    //create local_manifest.json
+    await Deno.writeTextFile(
+      collection_path+"/local_manifest.json",
+      JSON.stringify(local_manifest, null, 2),
+    );
+
+    //install
+    manifest = local_manifest;
+    for (const item of manifest) { //for each ko in manifest install them
+      if (item["status"] == "loaded") {
+        console.log("installing " + item["@id"]);
+        await installKO(item);
+      }
+    }
+  } catch (error) {
+    console.error("An error occurred:", error.message);
   }
 }
 

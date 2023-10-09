@@ -10,7 +10,7 @@ import {
 
 let manifest_path = "";
 let collection_path = "./pyshelf";
-let manifest: [{ [key: string]: string }] = [{}];
+let manifest: { [key: string]: string }[] = [{}];
 const routing_dictionary: {
   [key: string]: (input: Record<string, string>) => void;
 } = {};
@@ -132,7 +132,8 @@ async function installKO(koItem: Record<string, string>) {
         (await import(join(Deno.cwd(), koItem.local_url, artifact)))[
           function_name
         ];
-      routing_dictionary[koItem["@id"] + route] = importedFunction;
+      endpoints[route]["function"] = importedFunction;
+      routing_dictionary[koItem["@id"] + route] = endpoints[route];
     } catch (error) {
       all_endpoints_activated = false;
       koItem["error"] = error;
@@ -143,7 +144,7 @@ async function installKO(koItem: Record<string, string>) {
   }
 }
 
-async function main() {
+export async function start_up() {
   //set collection path
   collection_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
@@ -184,9 +185,10 @@ async function main() {
         await installKO(item);
       }
     }
+    return { manifest: manifest, routing_dictionary: routing_dictionary };
   } catch (error) {
     console.error("An error occurred:", error.message);
   }
 }
 
-main();
+//console.log(await start_up());

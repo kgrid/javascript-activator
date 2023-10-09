@@ -8,7 +8,7 @@
       "request": "launch",
       "name": "Launch Program",
       "type": "node",
-      "program": "${workspaceFolder}/manifest.ts",
+      "program": "${workspaceFolder}/api.ts",
       "cwd": "${workspaceFolder}",
       "runtimeExecutable": "/home/faridsei/.deno/bin/deno",
       "runtimeArgs": [

@@ -8,14 +8,21 @@ Manifest path is required while collection path is optional and defaults to
 To execute this deno project use a command like:
 
 ```
-ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=https://github.com/kgrid/python-activator/releases/download/0.6/manifest.json deno run -A manifest.ts
+ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.json deno run --allow-net api.ts
 ```
 
 or
 
 ```
-ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.json deno run -A manifest.ts
+ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=https://github.com/kgrid/python-activator/releases/download/0.6/manifest.json deno run --allow-net api.ts
 ```
+
+and enter A and press enter to allow all env permissions as requested.
+
+<!-- A commanline may later use something like the following to run the startup function in mamnifest
+```
+ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=https://github.com/kgrid/python-activator/releases/download/0.6/manifest.json deno run -A manifest.ts
+``` -->
 
 before pushing commits run the follwoing commands:
 

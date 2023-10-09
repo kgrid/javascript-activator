@@ -36,7 +36,7 @@ export async function download(
     try {
       await Deno.mkdir(dirname(destination));
     } catch (error) {
-      console.error(`Error creating cache folder: ${error}`);      
+      console.error(`Error creating cache folder: ${error}`);
     }
   }
 

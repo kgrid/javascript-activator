@@ -1,5 +1,5 @@
 /// <reference lib="deno.ns" />
-import { existsSync, isURL, path } from "./deps.ts";
+import { existsSync, isURL, join, parse, path } from "./deps.ts";
 import {
   download,
   getFilenameFromURL,
@@ -10,7 +10,10 @@ import {
 
 let manifest_path = "";
 let collection_path = "./pyshelf";
-let local_manifest: [{ [key: string]: string }] = [{}];
+let manifest: [{ [key: string]: string }] = [{}];
+const routing_dictionary: {
+  [key: string]: (input: Record<string, string>) => void;
+} = {};
 
 /**
  * reads and returns content of manifet file
@@ -53,9 +56,12 @@ async function loadKO(koItem: Record<string, string>) {
 
   //Download to localLocation if not local
   let localLocation = koItem.url;
-  let metadata:  Record<string, string>= { "@id": koItem["@id"], "status": "uninitialized" };
+  let metadata: Record<string, string> = {
+    "@id": koItem["@id"],
+    "status": "uninitialized",
+  };
   const cacheFolder = collection_path + "/" +
-    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), "");  
+    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), "");
 
   try {
     if (!isLocalPathOrURL(koItem.url)) {
@@ -70,9 +76,17 @@ async function loadKO(koItem: Record<string, string>) {
       await unzip(localLocation, collection_path);
     }
 
+    //read metadata to manifest
     metadata = JSON.parse(
       Deno.readTextFileSync(cacheFolder + "/metadata.json"),
     );
+
+    //add deployment data to metadata
+    const yamlContent = await Deno.readTextFile(
+      cacheFolder + "/deployment.yaml",
+    );
+    const parsedYaml = parse(yamlContent);
+    metadata["hasDeploymentSpecification"] = parsedYaml as string;
     metadata.status = "loaded";
   } catch (error) {
     console.error(
@@ -83,13 +97,15 @@ async function loadKO(koItem: Record<string, string>) {
     );
     metadata.error = error.message;
   }
-
   metadata["local_url"] = cacheFolder;
   metadata["url"] = koItem.url;
-  if (local_manifest[0]["@id"] == undefined) {
-    local_manifest = [metadata];
-  } else {
-    local_manifest.push(metadata);
+
+  //add metadata to manifest
+  const indexToUpdate = manifest.findIndex((item) =>
+    item["@id"] === koItem["@id"]
+  );
+  if (indexToUpdate !== -1) {
+    manifest[indexToUpdate] = { ...koItem, ...metadata }; //need to use index in manifest (array) to change entire value of one item.
   }
 }
 
@@ -97,7 +113,34 @@ async function loadKO(koItem: Record<string, string>) {
  * install ko from koItem.local_url
  */
 async function installKO(koItem: Record<string, string>) {
-  await console.log(koItem.local_url);
+  //add deployment info to manifest
+  const endpoints = JSON.parse(
+    JSON.stringify(koItem.hasDeploymentSpecification),
+  );
+
+  let all_endpoints_activated = true;
+  for (const route in endpoints) {
+    try {
+      if (
+        endpoints[route].post.engine.name != "org.kgrid.javascript-activator"
+      ) {
+        return;
+      }
+      const artifact = endpoints[route].post.engine.artifact;
+      const function_name = endpoints[route].post.engine.function;
+      const importedFunction =
+        (await import(join(Deno.cwd(), koItem.local_url, artifact)))[
+          function_name
+        ];
+      routing_dictionary[koItem["@id"] + route] = importedFunction;
+    } catch (error) {
+      all_endpoints_activated = false;
+      koItem["error"] = error;
+    }
+    if (all_endpoints_activated) {
+      koItem["status"] = "activated";
+    }
+  }
 }
 
 async function main() {
@@ -122,20 +165,19 @@ async function main() {
   try {
     //load
     console.log("Loading from maniefest at", manifest_path);
-    let manifest = await get_Manifest();
+    manifest = await get_Manifest();
     for (const item of manifest) { //for each ko in manifest load them
       console.log("loading " + item.url);
       await loadKO(item);
     }
-    
+
     //create local_manifest.json
     await Deno.writeTextFile(
-      collection_path+"/local_manifest.json",
-      JSON.stringify(local_manifest, null, 2),
+      collection_path + "/local_manifest.json",
+      JSON.stringify(manifest, null, 2),
     );
 
     //install
-    manifest = local_manifest;
     for (const item of manifest) { //for each ko in manifest install them
       if (item["status"] == "loaded") {
         console.log("installing " + item["@id"]);

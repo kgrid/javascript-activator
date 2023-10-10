@@ -1,5 +1,5 @@
 // app.ts
-import { Application, Router } from "./deps.ts";
+import { Application, Router, parseFlags } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 
 //load and install kos
@@ -55,6 +55,9 @@ app.use(router.routes());
 app.use(router.allowedMethods());
 
 // Start the server
-const port = 3001;
+const { args } = Deno;
+const argPort = parseFlags(args).port;
+const port = argPort ? Number(argPort) : 3001;
+
 console.log(`Server is running on http://localhost:${port}`);
 await app.listen({ port });

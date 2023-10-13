@@ -1,5 +1,5 @@
 // app.ts
-import { Application, Router, parseFlags } from "./deps.ts";
+import { Application, parseFlags, Router } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 
 //load and install kos
@@ -57,11 +57,10 @@ router.get("/endpoints/:path*", (ctx) => {
 
 router.post("/endpoints/:path*", async (ctx) => {
   const capturedPath = await ctx.params.path || "";
-  const input=await ctx.request.body().value
+  const input = await ctx.request.body().value;
   ctx.response.body = {
     "result": routing_dictionary[capturedPath].function(input),
-    "info": { endpoint :routing_dictionary[capturedPath],
-    "inputs": input},
+    "info": { endpoint: routing_dictionary[capturedPath], "inputs": input },
   };
 });
 

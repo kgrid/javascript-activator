@@ -6,7 +6,12 @@ import { start_up } from "./manifest.ts";
 const activation_data = await start_up();
 let manifest: { [key: string]: string }[] = [{}];
 let routing_dictionary: {
-  [key: string]: (input: Record<string, string>) => void;
+  [key: string]: {
+    data: {
+      someProperty: string;
+    };
+    function: (input: Record<string, string>) => void;
+  };
 } = {};
 if (activation_data !== undefined) {
   routing_dictionary = activation_data.routing_dictionary;
@@ -47,6 +52,16 @@ router.get("/endpoints/:path*", (ctx) => {
   ctx.response.body = {
     "@id": capturedPath,
     ...routing_dictionary[capturedPath],
+  };
+});
+
+router.post("/endpoints/:path*", async (ctx) => {
+  const capturedPath = await ctx.params.path || "";
+  const input=await ctx.request.body().value
+  ctx.response.body = {
+    "result": routing_dictionary[capturedPath].function(input),
+    "info": { endpoint :routing_dictionary[capturedPath],
+    "inputs": input},
   };
 });
 

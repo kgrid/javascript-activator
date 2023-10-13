@@ -1,5 +1,4 @@
-import { dirname } from "https://deno.land/std@0.202.0/path/dirname.ts";
-import { writeAll } from "https://deno.land/std@0.202.0/streams/write_all.ts";
+import { dirname, writeAll } from "./deps.ts";
 export function getFilenameFromURL(urlString: string): string {
   try {
     const url = new URL(urlString);

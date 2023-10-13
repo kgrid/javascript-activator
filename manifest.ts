@@ -12,9 +12,13 @@ let manifest_path = "";
 let collection_path = "./pyshelf";
 let manifest: { [key: string]: string }[] = [{}];
 const routing_dictionary: {
-  [key: string]: (input: Record<string, string>) => void;
-} = {};
-
+  [key: string]: {
+    data: {
+      someProperty: string;
+    };
+    function: (input: Record<string, string>) => void;
+  };
+}={};
 /**
  * reads and returns content of manifet file
  */
@@ -87,6 +91,21 @@ async function loadKO(koItem: Record<string, string>) {
     );
     const parsedYaml = parse(yamlContent);
     metadata["hasDeploymentSpecification"] = parsedYaml as string;
+
+     const originalJSON=JSON.parse(JSON.stringify(parsedYaml))
+     let transformedArray = [];
+     for (const path in originalJSON) {
+       const endpoint = originalJSON[path];
+    
+      // Create a new object with the desired structure
+      const transformedObject = {
+        "@id": `${koItem["@id"]}${path}`,
+        "post": originalJSON[path]["post"]
+      };
+      transformedArray.push(transformedObject)
+     }
+    metadata["hasDeploymentSpecification"]=JSON.parse(JSON.stringify(transformedArray,null)) ;
+
     metadata.status = "loaded";
   } catch (error) {
     console.error(
@@ -132,8 +151,10 @@ async function installKO(koItem: Record<string, string>) {
         (await import(join(Deno.cwd(), koItem.local_url, artifact)))[
           function_name
         ];
+       
       endpoints[route]["function"] = importedFunction;
-      routing_dictionary[koItem["@id"] + route] = endpoints[route];
+      
+      routing_dictionary[endpoints[route]["@id"]] = endpoints[route];
     } catch (error) {
       all_endpoints_activated = false;
       koItem["error"] = error;
@@ -191,4 +212,4 @@ export async function start_up() {
   }
 }
 
-//console.log(await start_up());
+//await start_up();

@@ -9,7 +9,7 @@ import {
 } from "./load.ts";
 
 let manifest_path = "";
-let collection_path = "./pyshelf";
+let collection_path = "./shelf";
 let manifest: { [key: string]: string }[] = [{}];
 const routing_dictionary: {
   [key: string]: {
@@ -95,7 +95,6 @@ async function loadKO(koItem: Record<string, string>) {
     const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
     const transformedArray = [];
     for (const path in originalJSON) {
-
       // Create a new object with the desired structure
       const transformedObject = {
         "@id": `${koItem["@id"]}${path}`,
@@ -171,7 +170,7 @@ export async function start_up() {
   collection_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
   if (collection_path == "" || undefined) {
-    collection_path = "./pyshelf";
+    collection_path = "./shelf";
   }
 
   //set manifest path

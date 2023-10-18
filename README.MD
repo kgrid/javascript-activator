@@ -3,7 +3,7 @@ ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH
 ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH
 
 Manifest path is required while collection path is optional and defaults to
-./pyshelf
+./shelf
 
 To execute this deno project use a command like:
 

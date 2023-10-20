@@ -1,4 +1,3 @@
-// app.ts
 import { Application, parse, parseFlags, Router, send } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 
@@ -21,19 +20,22 @@ if (activation_data !== undefined) {
 const app = new Application();
 const router = new Router();
 
-// Define routes
-router.get("/", (ctx) => {
-  ctx.response.body = "Welcome to the REST API";
+// Middleware for redirecting root to /doc
+app.use(async (ctx, next) => {
+  if (ctx.request.url.pathname === "/") {
+    ctx.response.redirect("/doc");
+  } else {
+    await next();
+  }
 });
 
 router.get("/kos", (ctx) => {
   ctx.response.body = manifest;
 });
 
-//provide access to swagger editir for each ko at /kos/{endpointid}/doc
+//provide access to swagger editir for each ko at /kos/{ko_id}/doc
 router.get("/kos/:path*/doc", async (ctx) => {
   const capturedPath = ctx.params.path || "";
-
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
 
   if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
@@ -45,63 +47,9 @@ router.get("/kos/:path*/doc", async (ctx) => {
     manifest[koIndex]["local_url"] + "/service.yaml",
   );
   const apiDoc = parse(apiSpec);
-
+  const html = await Deno.readTextFile("public/index.html");
   ctx.response.type = "text/html";
-  ctx.response.body = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>API Documentation</title>
-        </head>
-        <body>
-          <div id="swagger-ui"></div>
-          <script src="/public/swagger-ui-bundle.js"></script>
-          <script src="/public/swagger-ui-standalone-preset.js"></script>
-          <link rel="stylesheet" type="text/css" href="/public/swagger-ui.css" />
-          <link rel="stylesheet" type="text/css" href="/public/swagger-ui.css.map" />
-          <script>
-            const spec1 = ${JSON.stringify(apiDoc)};
-            SwaggerUIBundle({
-              spec: spec1,
-              dom_id: "#swagger-ui",
-            });            
-          </script>
-        </body>
-      </html>
-    `;
-});
-
-// Define a middleware to serve static files. Needed for /kos/:path*/doc above.
-app.use(async (ctx, next) => {
-  // Serve static files from the "public" directory
-  const staticPath = "./public";
-  if (ctx.request.url.pathname.startsWith("/public")) {
-    const path = ctx.request.url.pathname.substring(7); // Remove "/public" prefix
-    await send(ctx, path, {
-      root: staticPath,
-    });
-  } else {
-    await next();
-  }
-});
-
-//provide access to service.yaml for each ko at /kos/{endpointid}/service.yaml
-router.get("/kos/:path*/service.yaml", (ctx) => {
-  const capturedPath = ctx.params.path || "";
-
-  const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
-
-  if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
-  if (manifest[koIndex]["status"] != "activated") {
-    ctx.throw(404, "KO " + capturedPath + " is not activated.");
-  }
-
-  const specPath = manifest[koIndex]["local_url"] + "/service.yaml";
-
-  const openapiSpec = Deno.readTextFileSync(specPath);
-  // Serve the requested OpenAPI specification as YAML
-  ctx.response.type = "application/yaml";
-  ctx.response.body = openapiSpec;
+  ctx.response.body = html.replace("{{apiDoc}}", JSON.stringify(apiDoc));
 });
 
 router.get("/kos/:path*", (ctx) => {
@@ -120,7 +68,6 @@ router.get("/endpoints", (ctx) => {
 
 router.get("/endpoints/:path*", (ctx) => {
   const capturedPath = ctx.params.path || "";
-
   ctx.response.body = {
     "@id": capturedPath,
     ...routing_dictionary[capturedPath],
@@ -134,6 +81,59 @@ router.post("/endpoints/:path*", async (ctx) => {
     "result": routing_dictionary[capturedPath].function(input),
     "info": { endpoint: routing_dictionary[capturedPath], "inputs": input },
   };
+});
+
+//provide access to swagger editir for app APIs at /doc
+router.get("/doc", async (ctx) => {
+  const openapi = await Deno.readTextFile("public/openapi.json");
+  const html = await Deno.readTextFile("public/index.html");
+  ctx.response.type = "text/html";
+  ctx.response.body = html.replace("{{apiDoc}}", openapi);
+});
+
+// Middleware to serve static files from the "public" directory. Needed for /kos/:path*/doc above.
+app.use(async (ctx, next) => {
+  const staticPath = "./public";
+  if (ctx.request.url.pathname.startsWith("/public")) {
+    const path = ctx.request.url.pathname.substring(7); // Remove "/public" prefix
+    await send(ctx, path, {
+      root: staticPath,
+    });
+  } else {
+    await next();
+  }
+});
+
+//provide access to service.yaml for each ko at /kos/{endpointid}/service.yaml
+router.get("/kos/:path*/service.yaml", (ctx) => {
+  const capturedPath = ctx.params.path || "";
+  const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
+
+  if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
+  if (manifest[koIndex]["status"] != "activated") {
+    ctx.throw(404, "KO " + capturedPath + " is not activated.");
+  }
+
+  const specPath = manifest[koIndex]["local_url"] + "/service.yaml";
+  const openapiSpec = Deno.readTextFileSync(specPath);
+  // Serve the requested OpenAPI specification as YAML
+  ctx.response.type = "application/yaml";
+  ctx.response.body = openapiSpec;
+});
+
+//provide access to service file content for each ko at /kos/{endpointid}/service
+router.get("/kos/:path*/service", (ctx) => {
+  const capturedPath = ctx.params.path || "";
+  const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
+
+  if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
+  if (manifest[koIndex]["status"] != "activated") {
+    ctx.throw(404, "KO " + capturedPath + " is not activated.");
+  }
+
+  const specPath = manifest[koIndex]["local_url"] + "/service.yaml";
+  const openapiSpec = Deno.readTextFileSync(specPath);
+  ctx.response.body = openapiSpec;
 });
 
 // Add the router as middleware

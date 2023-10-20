@@ -1,0 +1,201 @@
+{
+  "openapi": "3.0.2",
+  "info": { "title": "FastAPI", "version": "0.1.0" },
+  "paths": {
+    "/endpoints": {
+      "get": {
+        "summary": "Endpoints",
+        "operationId": "endpoints_endpoints_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/endpoints/{endpoint_path}": {
+      "get": {
+        "summary": "Endpoint Detail",
+        "operationId": "endpoint_detail_endpoints__endpoint_path__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Endpoint Path", "type": "string" },
+            "name": "endpoint_path",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Execute Endpoint",
+        "operationId": "execute_endpoint_endpoints__endpoint_path__post",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Endpoint Path", "type": "string" },
+            "name": "endpoint_path",
+            "in": "path"
+          }
+        ],
+        "requestBody": {
+          "content": { "application/json": { "schema": { "title": "Body" } } },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kos/{ko_key}/service.yaml": {
+      "get": {
+        "summary": "Download File",
+        "operationId": "download_file_kos__ko_key__service_yaml_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Ko Key", "type": "string" },
+            "name": "ko_key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kos/{ko_key}/service": {
+      "get": {
+        "summary": "Get Data",
+        "operationId": "get_data_kos__ko_key__service_get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Ko Key", "type": "string" },
+            "name": "ko_key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/kos": {
+      "get": {
+        "summary": "Endpoints",
+        "operationId": "endpoints_kos_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          }
+        }
+      }
+    },
+    "/kos/{ko_key}": {
+      "get": {
+        "summary": "Endpoint Detail",
+        "operationId": "endpoint_detail_kos__ko_key__get",
+        "parameters": [
+          {
+            "required": true,
+            "schema": { "title": "Ko Key", "type": "string" },
+            "name": "ko_key",
+            "in": "path"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HTTPValidationError": {
+        "title": "HTTPValidationError",
+        "type": "object",
+        "properties": {
+          "detail": {
+            "title": "Detail",
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/ValidationError" }
+          }
+        }
+      },
+      "ValidationError": {
+        "title": "ValidationError",
+        "required": ["loc", "msg", "type"],
+        "type": "object",
+        "properties": {
+          "loc": {
+            "title": "Location",
+            "type": "array",
+            "items": { "anyOf": [{ "type": "string" }, { "type": "integer" }] }
+          },
+          "msg": { "title": "Message", "type": "string" },
+          "type": { "title": "Error Type", "type": "string" }
+        }
+      }
+    }
+  }
+}

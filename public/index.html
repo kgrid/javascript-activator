@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+      <html>
+        <head>
+          <title>API Documentation</title>
+        </head>
+        <body>
+          <div id="swagger-ui"></div>
+          <script src="/public/swagger-ui-bundle.js"></script>
+          <script src="/public/swagger-ui-standalone-preset.js"></script>
+          <link rel="stylesheet" type="text/css" href="/public/swagger-ui.css" />
+          <link rel="stylesheet" type="text/css" href="/public/swagger-ui.css.map" />
+          <script>
+            const spec1 = {{apiDoc}};
+            SwaggerUIBundle({
+              spec: spec1,
+              dom_id: "#swagger-ui",
+            });            
+          </script>
+        </body>
+      </html>

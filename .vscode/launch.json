@@ -18,7 +18,7 @@
         "--allow-all"
       ],
       "env": {
-        "ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH": "/home/faridsei/dev/code/javascript-activator/pyshelf",
+        "ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH": "/home/faridsei/dev/code/javascript-activator/shelf",
         "ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH": "/home/faridsei/dev/code/javascript-activator/fixtures/installfiles/manifest.json"
       },
       "attachSimplePort": 9229

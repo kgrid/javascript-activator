@@ -11,6 +11,7 @@ import {
 let manifest_path = "";
 let collection_path = "./shelf";
 let manifest: { [key: string]: string }[] = [{}];
+const supported_ko_model_versions = ["v1.0", "2"];
 const routing_dictionary: {
   [key: string]: {
     data: {
@@ -64,12 +65,14 @@ async function loadKO(koItem: Record<string, string>) {
     "@id": koItem["@id"],
     "status": "uninitialized",
   };
-  const cacheFolder = collection_path + "/" +
-    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), "");
+  const cacheFolder = join(
+    collection_path,
+    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), ""),
+  );
 
   try {
     if (!isLocalPathOrURL(koItem.url)) {
-      localLocation = collection_path + "/" + getFilenameFromURL(koItem.url);
+      localLocation = join(collection_path, getFilenameFromURL(koItem.url));
       await download(koItem.url, localLocation);
     } else {
       localLocation = path.fromFileUrl(localLocation);
@@ -82,12 +85,47 @@ async function loadKO(koItem: Record<string, string>) {
 
     //read metadata to manifest
     metadata = JSON.parse(
-      Deno.readTextFileSync(cacheFolder + "/metadata.json"),
+      Deno.readTextFileSync(join(cacheFolder, "metadata.json")),
     );
 
+    //check if this version of activator supports this KO's model
+    metadata["status"] = "uninitialized";
+    if (!supported_ko_model_versions.includes(metadata["version"])) {
+      throw new Error(
+        "KOs with version " + metadata["version"] +
+          " are not supported in this activator.",
+      );
+    }
+
     //add deployment data to metadata
+    let deployment_file_location = join(cacheFolder, "deployment.yaml");
+    if (metadata["version"] == "2") { //KO model version 2 specific code to read services
+      type Data = {
+        "@id": string;
+        "@type"?: string | string[];
+        serviceSpec?: string;
+        dependsOn?: string;
+        implementedBy: { "@id": string; "@type": string };
+      };
+      console.log(metadata["hasService"]);
+      const services: Data[] = metadata["hasService"] as unknown as Data[];
+      for (const item of services) {
+        console.log(item);
+        if (
+          item["@type"] === "API" &&
+          item.implementedBy["@type"] === "org.kgrid.javascript-activator"
+        ) {
+          deployment_file_location = join(
+            cacheFolder,
+            item["implementedBy"]["@id"],
+            "deployment.yaml",
+          );
+          break;
+        }
+      }
+    }
     const yamlContent = await Deno.readTextFile(
-      cacheFolder + "/deployment.yaml",
+      deployment_file_location,
     );
     const parsedYaml = parse(yamlContent);
     metadata["hasDeploymentSpecification"] = parsedYaml as string;
@@ -133,10 +171,10 @@ async function loadKO(koItem: Record<string, string>) {
  */
 async function installKO(koItem: Record<string, string>) {
   //add deployment info to manifest
+
   const endpoints = JSON.parse(
     JSON.stringify(koItem.hasDeploymentSpecification),
   );
-
   let all_endpoints_activated = true;
   for (const route in endpoints) {
     try {
@@ -153,11 +191,11 @@ async function installKO(koItem: Record<string, string>) {
         ];
 
       endpoints[route]["function"] = importedFunction;
-
       routing_dictionary[endpoints[route]["@id"]] = endpoints[route];
     } catch (error) {
       all_endpoints_activated = false;
       koItem["error"] = error;
+      console.log(error);
     }
     if (all_endpoints_activated) {
       koItem["status"] = "activated";
@@ -195,7 +233,7 @@ export async function start_up() {
 
     //create local_manifest.json
     await Deno.writeTextFile(
-      collection_path + "/local_manifest.json",
+      join(collection_path, "local_manifest.json"),
       JSON.stringify(manifest, null, 2),
     );
 

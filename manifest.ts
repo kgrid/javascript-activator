@@ -212,30 +212,45 @@ export async function start_up() {
   }
 
   //set manifest path
+  let has_input_manifest = true;
   manifest_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH") ?? "";
   if (manifest_path == "" || undefined) {
-    console.log(`ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH is not defined.`);
-    return;
-  }
-  if (!path.isAbsolute(manifest_path) && isLocalPathOrURL(manifest_path)) {
-    manifest_path = path.resolve(manifest_path); //used to support relative manifest path
-  }
-
-  try {
-    //load
-    console.log("Loading from maniefest at", manifest_path);
-    manifest = await get_Manifest();
-    for (const item of manifest) { //for each ko in manifest load them
-      console.log("loading " + item.url);
-      await loadKO(item);
+    if (existsSync(join(collection_path, "local_manifest.json"))) {
+      //read local_manifest.json
+      manifest = JSON.parse(
+        Deno.readTextFileSync(join(collection_path, "local_manifest.json")),
+      );
+      has_input_manifest = false;
+    } else {
+      console.log(
+        `ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH is not defined.`,
+      );
+      return;
     }
+  }
 
-    //create local_manifest.json
-    await Deno.writeTextFile(
-      join(collection_path, "local_manifest.json"),
-      JSON.stringify(manifest, null, 2),
-    );
+  console.log("-->" + manifest.length);
+  try {
+    if (has_input_manifest) {
+      if (!path.isAbsolute(manifest_path) && isLocalPathOrURL(manifest_path)) {
+        manifest_path = path.resolve(manifest_path); //used to support relative manifest path
+      }
+
+      //load
+      console.log("Loading from maniefest at", manifest_path);
+      manifest = await get_Manifest();
+      for (const item of manifest) { //for each ko in manifest load them
+        console.log("loading " + item.url);
+        await loadKO(item);
+      }
+
+      //create local_manifest.json
+      await Deno.writeTextFile(
+        join(collection_path, "local_manifest.json"),
+        JSON.stringify(manifest, null, 2),
+      );
+    }
 
     //install
     for (const item of manifest) { //for each ko in manifest install them

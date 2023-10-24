@@ -1,4 +1,4 @@
-import { Application, parse, parseFlags, Router, send, join } from "./deps.ts";
+import { Application, join, parse, parseFlags, Router, send } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 
 //load and install kos
@@ -74,19 +74,19 @@ router.post("/endpoints/:endpoint_path*", async (ctx) => {
   };
 });
 
-
 //provide access to service.yaml for each ko at /kos/{ko_id}/service
 router.get("/kos/:ko_id*/service", (ctx) => {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
 
   if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
-  // if (manifest[koIndex]["status"] != "activated") {
-  //   ctx.throw(404, "KO " + capturedPath + " is not activated.");
-  // }
 
-  const specPath =join( manifest[koIndex]["local_url"],manifest[koIndex]["hasServiceSpecification"]);
-  console.log(specPath)
+  const service_specification=manifest[koIndex]["hasServiceSpecification"] || "service.yaml";
+
+  const specPath = join(
+    manifest[koIndex]["local_url"],
+    service_specification,
+  );
   const openapiSpec = Deno.readTextFileSync(specPath);
   // Serve the requested OpenAPI specification as YAML
   ctx.response.type = "application/yaml";
@@ -94,6 +94,12 @@ router.get("/kos/:ko_id*/service", (ctx) => {
 });
 
 router.get("/kos", (ctx) => {
+ 
+  for(const item of manifest){
+    if (item["status"] == "activated") {
+      item["documentation"]=ctx.request.url+"/"+item["@id"]+"/doc" //join method only works for path and joining for URL is done using + in Deno
+    }
+  }          
   ctx.response.body = manifest;
 });
 
@@ -103,12 +109,14 @@ router.get("/kos/:ko_id*/doc", async (ctx) => {
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
 
   if (koIndex == -1) ctx.throw(404, "KO " + capturedPath + " is not found.");
-  if (manifest[koIndex]["status"] != "activated") {
-    ctx.throw(404, "KO " + capturedPath + " is not activated.");
-  }
+
+  const service_specification=manifest[koIndex]["hasServiceSpecification"] || "service.yaml";
 
   const apiSpec = await Deno.readTextFile(
-    join( manifest[koIndex]["local_url"],manifest[koIndex]["hasServiceSpecification"])
+    join(
+      manifest[koIndex]["local_url"],
+      service_specification,
+    ),
   );
   const apiDoc = parse(apiSpec);
   const html = await Deno.readTextFile("public/index.html");
@@ -119,10 +127,11 @@ router.get("/kos/:ko_id*/doc", async (ctx) => {
 router.get("/kos/:ko_id*", (ctx) => {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
-
+  if (manifest[koIndex]["status"] == "activated") {
+    manifest[koIndex]["documentation"]=ctx.request.url+"/doc" //join method only works for path and joining for URL is done using + in Deno
+  }
   ctx.response.body = manifest[koIndex];
 });
-
 
 // Add the router as middleware
 app.use(router.routes());

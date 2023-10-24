@@ -107,10 +107,8 @@ async function loadKO(koItem: Record<string, string>) {
         dependsOn?: string;
         implementedBy: { "@id": string; "@type": string };
       };
-      console.log(metadata["hasService"]);
       const services: Data[] = metadata["hasService"] as unknown as Data[];
       for (const item of services) {
-        console.log(item);
         if (
           item["@type"] === "API" &&
           item.implementedBy["@type"] === "org.kgrid.javascript-activator"

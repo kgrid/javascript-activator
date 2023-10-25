@@ -228,7 +228,6 @@ export async function start_up() {
     }
   }
 
-  console.log("-->" + manifest.length);
   try {
     if (has_input_manifest) {
       if (!path.isAbsolute(manifest_path) && isLocalPathOrURL(manifest_path)) {

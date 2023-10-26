@@ -6,12 +6,14 @@ import {
   Router,
   send,
   Status,
+  existsSync,
 } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 import {
   EndpointNotFoundError,
   InvalidInputParameterError,
   KONotFoundError,
+  FileNotFoundError,
 } from "./exceptions.ts";
 //load and install kos
 const activation_data = await start_up();
@@ -62,7 +64,8 @@ app.use(async (ctx, next) => {
     if (
       error instanceof EndpointNotFoundError ||
       error instanceof InvalidInputParameterError ||
-      error instanceof KONotFoundError
+      error instanceof KONotFoundError ||
+      error instanceof FileNotFoundError
     ) {
       ctx.response.status = error.status;
       ctx.response.body = {
@@ -139,7 +142,11 @@ router.get("/kos/:ko_id*/service", (ctx) => {
     manifest[koIndex]["local_url"],
     service_specification,
   );
+  if (!existsSync(specPath)) 
+    throw new FileNotFoundError(`FileNotFoundError: file '${service_specification}' not found.`);
+
   const openapiSpec = Deno.readTextFileSync(specPath);
+
   // Serve the requested OpenAPI specification as YAML
   ctx.response.type = "application/yaml";
   ctx.response.body = openapiSpec;

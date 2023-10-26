@@ -11,7 +11,7 @@ import {
 let manifest_path = "";
 let collection_path = "./shelf";
 let manifest: { [key: string]: string }[] = [{}];
-const supported_ko_model_versions = ["v1.0", "2"];
+const supported_kgrid_ko_model_versions = ["1","2"];
 const routing_dictionary: {
   [key: string]: {
     data: {
@@ -87,19 +87,17 @@ async function loadKO(koItem: Record<string, string>) {
     metadata = JSON.parse(
       Deno.readTextFileSync(join(cacheFolder, "metadata.json")),
     );
-
-    //check if this version of activator supports this KO's model
+    //check if this kgrid version of activator supports this KO's model
     metadata["status"] = "uninitialized";
-    if (!supported_ko_model_versions.includes(metadata["version"])) {
+    if (!supported_kgrid_ko_model_versions.includes(metadata["kgrid"] || "1")) {
       throw new Error(
-        "KOs with version " + metadata["version"] +
+        "KOs with kgrid version " + metadata["kgrid"] +
           " are not supported in this activator.",
       );
     }
-
     //add deployment data to metadata
     let deployment_file_location = join(cacheFolder, "deployment.yaml");
-    if (metadata["version"] == "2") { //KO model version 2 specific code to read services
+    if (metadata["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
       type Data = {
         "@id": string;
         "@type"?: string | string[];

@@ -16,6 +16,14 @@ export class KONotFoundError extends Error {
   status = Status.NotFound; //404
 }
 
+export class FileNotFoundError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "FileNotFoundError";
+  }
+  status = Status.NotFound; //404
+}
+
 export class InvalidInputParameterError extends Error {
   constructor(message: string) {
     super(message);

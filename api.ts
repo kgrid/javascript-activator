@@ -198,5 +198,5 @@ const { args } = Deno;
 const argPort = parseFlags(args).port;
 const port = argPort ? Number(argPort) : 3002;
 
-console.log(`Server is running on http://localhost:${port}`);
+console.info(`Server is running on http://localhost:${port}`);
 await app.listen({ port });

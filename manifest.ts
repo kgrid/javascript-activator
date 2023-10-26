@@ -144,12 +144,6 @@ async function loadKO(koItem: Record<string, string>) {
 
     metadata.status = "loaded";
   } catch (error) {
-    console.error(
-      "Error loading ko at ",
-      koItem.url,
-      ". error: ",
-      error.message,
-    );
     metadata.error = error.message;
   }
   metadata["local_url"] = cacheFolder;
@@ -162,6 +156,7 @@ async function loadKO(koItem: Record<string, string>) {
   if (indexToUpdate !== -1) {
     manifest[indexToUpdate] = { ...koItem, ...metadata }; //need to use index in manifest (array) to change entire value of one item.
   }
+  return metadata;
 }
 
 /**
@@ -193,7 +188,7 @@ async function installKO(koItem: Record<string, string>) {
     } catch (error) {
       all_endpoints_activated = false;
       koItem["error"] = error;
-      console.log(error);
+      console.error(error);
     }
     if (all_endpoints_activated) {
       koItem["status"] = "activated";
@@ -202,6 +197,8 @@ async function installKO(koItem: Record<string, string>) {
 }
 
 export async function start_up() {
+  console.info(">>>>>> running startup event");
+
   //set collection path
   collection_path =
     Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
@@ -221,7 +218,7 @@ export async function start_up() {
       );
       has_input_manifest = false;
     } else {
-      console.log(
+      console.info(
         `ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH is not defined.`,
       );
       return;
@@ -235,11 +232,17 @@ export async function start_up() {
       }
 
       //load
-      console.log("Loading from maniefest at", manifest_path);
+      console.info("Loading from maniefest at", manifest_path);
       manifest = await get_Manifest();
       for (const item of manifest) { //for each ko in manifest load them
-        console.log("loading " + item.url);
-        await loadKO(item);
+        const metadata = await loadKO(item);
+        console.info(
+          JSON.stringify({
+            "@id": metadata["@id"],
+            "status": metadata["status"],
+            "error": metadata["error"],
+          }),
+        );
       }
 
       //create local_manifest.json
@@ -247,12 +250,13 @@ export async function start_up() {
         join(collection_path, "local_manifest.json"),
         JSON.stringify(manifest, null, 2),
       );
-    }
+      console.info("Installing loaded objects");
+    } else console.info("Installing objects from local manifest");
 
     //install
     for (const item of manifest) { //for each ko in manifest install them
       if (item["status"] == "loaded") {
-        console.log("installing " + item["@id"]);
+        console.info("installing " + item["@id"]);
         await installKO(item);
       }
     }

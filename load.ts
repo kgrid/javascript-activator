@@ -76,6 +76,5 @@ export async function unzip(
 
   // create subprocess and collect output
   const { code, stdout, stderr } = await process.output();
-
   console.log("---->", code, stdout, stderr);
 }

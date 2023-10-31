@@ -16,8 +16,7 @@ import {
   KONotFoundError,
 } from "./exceptions.ts";
 import { set_collection_path } from "./load.ts";
-//load and install kos
-const activation_data = await start_up();
+
 let manifest: { [key: string]: string }[] = [{}];
 let routing_dictionary: {
   [key: string]: {
@@ -27,16 +26,19 @@ let routing_dictionary: {
     function: (input: Record<string, string>) => void;
   };
 } = {};
+const collection_path = set_collection_path();
+const app = new Application();
+const router = new Router();
+
+//load and install kos
+const activation_data = await start_up();
+
 if (activation_data !== undefined) {
   routing_dictionary = activation_data.routing_dictionary;
   manifest = activation_data.manifest;
 }
-const collection_path = set_collection_path();
 
-const app = new Application();
-const router = new Router();
-
-// Middleware for redirecting root to /doc
+// Add middleware for redirecting root to /doc
 app.use(async (ctx, next) => {
   if (ctx.request.url.pathname === "/") {
     ctx.response.redirect("/doc");
@@ -45,7 +47,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-// Middleware to serve static files from the "public" directory. Needed for /kos/:path*/doc above.
+// Add middleware to serve static files from the "public" directory. Needed for /kos/:path*/doc.
 app.use(async (ctx, next) => {
   const staticPath = "./public";
   if (ctx.request.url.pathname.startsWith("/public")) {
@@ -58,7 +60,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-// Custom error handling middleware
+// Add Middleware for custom error handling
 app.use(async (ctx, next) => {
   try {
     await next();
@@ -82,7 +84,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-//provide access to swagger editir for app APIs at /doc
+//provide access to OpenAPI documentation using swagger editor for the app APIs at /doc
 router.get("/doc", async (ctx) => {
   const openapi = await Deno.readTextFile("public/openapi.json");
   const html = await Deno.readTextFile("public/index.html");
@@ -90,6 +92,7 @@ router.get("/doc", async (ctx) => {
   ctx.response.body = html.replace("{{apiDoc}}", openapi);
 });
 
+//Get list of activated endpoints
 router.get("/endpoints", (ctx) => {
   ctx.response.body = Object.keys(routing_dictionary).map((key) => ({
     "@id": key,
@@ -97,6 +100,7 @@ router.get("/endpoints", (ctx) => {
   }));
 });
 
+//Get specific endpoint
 router.get("/endpoints/:endpoint_path*", (ctx) => {
   const capturedPath = ctx.params.endpoint_path || "";
   if (capturedPath in routing_dictionary) {
@@ -111,6 +115,7 @@ router.get("/endpoints/:endpoint_path*", (ctx) => {
   }
 });
 
+//Execute the function for a specific endpoint
 router.post("/endpoints/:endpoint_path*", async (ctx) => {
   const capturedPath = await ctx.params.endpoint_path || "";
   if (!(capturedPath in routing_dictionary)) {
@@ -130,7 +135,7 @@ router.post("/endpoints/:endpoint_path*", async (ctx) => {
   }
 });
 
-//provide access to service.yaml for each ko at /kos/{ko_id}/service
+//Provide access to service.yaml for each ko at /kos/{ko_id}/service
 router.get("/kos/:ko_id*/service", (ctx) => {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
@@ -174,14 +179,12 @@ router.get("/kos/:ko_id*/service", (ctx) => {
       `FileNotFoundError: file '${service_specification}' not found.`,
     );
   }
-
   const openapiSpec = Deno.readTextFileSync(specPath);
-
-  // Serve the requested OpenAPI specification as YAML
-  ctx.response.type = "application/yaml";
+  ctx.response.type = "application/yaml"; //Serve the requested OpenAPI specification as YAML
   ctx.response.body = openapiSpec;
 });
 
+//Get list of KOs
 router.get("/kos", (ctx) => {
   for (const item of manifest) {
     if (item["status"] == "activated") {
@@ -191,7 +194,7 @@ router.get("/kos", (ctx) => {
   ctx.response.body = manifest;
 });
 
-//provide access to swagger editir for each ko at /kos/{ko_id}/doc
+//Provide access to OpenAPI documentation using swagger editir for each ko at /kos/{ko_id}/doc
 router.get("/kos/:ko_id*/doc", async (ctx) => {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
@@ -238,6 +241,7 @@ router.get("/kos/:ko_id*/doc", async (ctx) => {
   ctx.response.body = html.replace("{{apiDoc}}", JSON.stringify(apiDoc));
 });
 
+//Get specific KO
 router.get("/kos/:ko_id*", (ctx) => {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
@@ -259,6 +263,5 @@ app.use(router.allowedMethods());
 const { args } = Deno;
 const argPort = parseFlags(args).port;
 const port = argPort ? Number(argPort) : 3002;
-
 console.info(`Server is running on http://localhost:${port}`);
 await app.listen({ port });

@@ -13,7 +13,8 @@
   "paths": {
     "/endpoints": {
       "get": {
-        "summary": "Endpoints",
+        "summary": "Endpoints List and Detail",
+        "description": "Gives the list of activated endpoints and their detail.",
         "operationId": "endpoints_endpoints_get",
         "responses": {
           "200": {
@@ -30,6 +31,7 @@
     "/endpoints/{endpoint_path}": {
       "get": {
         "summary": "Endpoint Detail",
+        "description": "Gives detail for a specific endpoint.",
         "operationId": "endpoint_detail_endpoints__endpoint_path__get",
         "parameters": [
           {
@@ -65,6 +67,7 @@
       },
       "post": {
         "summary": "Execute Endpoint",
+        "description": "Execute the KO function behind a specific endpoint.",
         "operationId": "execute_endpoint_endpoints__endpoint_path__post",
         "parameters": [
           {
@@ -111,7 +114,8 @@
     },
     "/kos/{ko_id}/service": {
       "get": {
-        "summary": "Download File",
+        "summary": "Download Service File",
+        "description": "Provide access to the service.yaml for each ko at /kos/{ko_id}/service.",
         "operationId": "download_file_kos__ko_id__service_get",
         "parameters": [
           {
@@ -148,7 +152,8 @@
     },
     "/kos": {
       "get": {
-        "summary": "Endpoints",
+        "summary": "KOs List and Detail",
+        "description": "Gives the list of KOs and their detail.",
         "operationId": "endpoints_kos_get",
         "responses": {
           "200": {
@@ -164,8 +169,8 @@
     },
     "/kos/{ko_id}/doc": {
       "get": {
-        "summary": "Endpoint Detail",
-        "description": "You should try out this route in your browser. It performs a redirection to the swagger editor for the ko which its id is provided.",
+        "summary": "KO Documentation",
+        "description": "This API redirects to the swagger editor for ko with id {ko_id}. This route should be used only in the browser.",
         "operationId": "endpoint_detail_kos__ko_id__doc_get",
         "parameters": [
           {
@@ -202,7 +207,8 @@
     },
     "/kos/{ko_id}": {
       "get": {
-        "summary": "Endpoint Detail",
+        "summary": "KO Detail",
+        "description": "Gives a specific KO and its detail.",
         "operationId": "endpoint_detail_kos__ko_id__get",
         "parameters": [
           {

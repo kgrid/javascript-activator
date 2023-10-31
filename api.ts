@@ -1,20 +1,21 @@
 import {
   Application,
+  existsSync,
   join,
   parse,
   parseFlags,
   Router,
   send,
   Status,
-  existsSync,
 } from "./deps.ts";
 import { start_up } from "./manifest.ts";
 import {
   EndpointNotFoundError,
+  FileNotFoundError,
   InvalidInputParameterError,
   KONotFoundError,
-  FileNotFoundError,
 } from "./exceptions.ts";
+import { set_collection_path } from "./load.ts";
 //load and install kos
 const activation_data = await start_up();
 let manifest: { [key: string]: string }[] = [{}];
@@ -30,6 +31,7 @@ if (activation_data !== undefined) {
   routing_dictionary = activation_data.routing_dictionary;
   manifest = activation_data.manifest;
 }
+const collection_path = set_collection_path();
 
 const app = new Application();
 const router = new Router();
@@ -135,15 +137,43 @@ router.get("/kos/:ko_id*/service", (ctx) => {
   if (koIndex == -1) {
     throw new KONotFoundError(`KeyError: Key '${capturedPath}' not found.`);
   }
-  const service_specification = manifest[koIndex]["hasServiceSpecification"] ||
+  let service_specification = manifest[koIndex]["hasServiceSpecification"] ||
     "service.yaml";
 
+  if (manifest[koIndex]["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+    type Data = {
+      "@id": string;
+      "@type"?: string | string[];
+      serviceSpec?: string;
+      dependsOn?: string;
+      implementedBy: { "@id": string; "@type": string };
+    };
+    const services: Data[] =
+      manifest[koIndex]["hasService"] as unknown as Data[];
+    for (const service of services) {
+      if (
+        service["@type"] === "API" &&
+        service.implementedBy["@type"] === "org.kgrid.javascript-activator"
+      ) {
+        service_specification = join(
+          service["implementedBy"]["@id"],
+          service["hasServiceSpecification"] ?? "service.yaml",
+        );
+        break;
+      }
+    }
+  }
+
   const specPath = join(
+    collection_path,
     manifest[koIndex]["local_url"],
     service_specification,
   );
-  if (!existsSync(specPath)) 
-    throw new FileNotFoundError(`FileNotFoundError: file '${service_specification}' not found.`);
+  if (!existsSync(specPath)) {
+    throw new FileNotFoundError(
+      `FileNotFoundError: file '${service_specification}' not found.`,
+    );
+  }
 
   const openapiSpec = Deno.readTextFileSync(specPath);
 
@@ -168,11 +198,36 @@ router.get("/kos/:ko_id*/doc", async (ctx) => {
   if (koIndex == -1) {
     throw new KONotFoundError(`KeyError: Key '${capturedPath}' not found.`);
   }
-  const service_specification = manifest[koIndex]["hasServiceSpecification"] ||
+  let service_specification = manifest[koIndex]["hasServiceSpecification"] ||
     "service.yaml";
+
+  if (manifest[koIndex]["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+    type Data = {
+      "@id": string;
+      "@type"?: string | string[];
+      serviceSpec?: string;
+      dependsOn?: string;
+      implementedBy: { "@id": string; "@type": string };
+    };
+    const services: Data[] =
+      manifest[koIndex]["hasService"] as unknown as Data[];
+    for (const service of services) {
+      if (
+        service["@type"] === "API" &&
+        service.implementedBy["@type"] === "org.kgrid.javascript-activator"
+      ) {
+        service_specification = join(
+          service["implementedBy"]["@id"],
+          service["hasServiceSpecification"] ?? "service.yaml",
+        );
+        break;
+      }
+    }
+  }
 
   const apiSpec = await Deno.readTextFile(
     join(
+      collection_path,
       manifest[koIndex]["local_url"],
       service_specification,
     ),

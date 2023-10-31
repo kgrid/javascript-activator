@@ -78,3 +78,12 @@ export async function unzip(
   const { code, stdout, stderr } = await process.output();
   console.log("---->", code, stdout, stderr);
 }
+
+export function set_collection_path() {
+  let collection_path =
+    Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
+  if (collection_path == "" || undefined) {
+    collection_path = "./shelf";
+  }
+  return collection_path;
+}

@@ -5,13 +5,14 @@ import {
   getFilenameFromURL,
   isLocalPathOrURL,
   resolveRelativeURL,
+  set_collection_path,
   unzip,
 } from "./load.ts";
 
 let manifest_path = "";
 let collection_path = "./shelf";
 let manifest: { [key: string]: string }[] = [{}];
-const supported_kgrid_ko_model_versions = ["1","2"];
+const supported_kgrid_ko_model_versions = ["1", "2"];
 const routing_dictionary: {
   [key: string]: {
     data: {
@@ -65,9 +66,13 @@ async function loadKO(koItem: Record<string, string>) {
     "@id": koItem["@id"],
     "status": "uninitialized",
   };
+  const local_url = getFilenameFromURL(koItem.url).replace(
+    path.extname(koItem.url),
+    "",
+  );
   const cacheFolder = join(
     collection_path,
-    getFilenameFromURL(koItem.url).replace(path.extname(koItem.url), ""),
+    local_url,
   );
 
   try {
@@ -95,56 +100,12 @@ async function loadKO(koItem: Record<string, string>) {
           " are not supported in this activator.",
       );
     }
-    //add deployment data to metadata
-    let deployment_file_location = join(cacheFolder, "deployment.yaml");
-    if (metadata["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
-      type Data = {
-        "@id": string;
-        "@type"?: string | string[];
-        serviceSpec?: string;
-        dependsOn?: string;
-        implementedBy: { "@id": string; "@type": string };
-      };
-      const services: Data[] = metadata["hasService"] as unknown as Data[];
-      for (const item of services) {
-        if (
-          item["@type"] === "API" &&
-          item.implementedBy["@type"] === "org.kgrid.javascript-activator"
-        ) {
-          deployment_file_location = join(
-            cacheFolder,
-            item["implementedBy"]["@id"],
-            "deployment.yaml",
-          );
-          break;
-        }
-      }
-    }
-    const yamlContent = await Deno.readTextFile(
-      deployment_file_location,
-    );
-    const parsedYaml = parse(yamlContent);
-    metadata["hasDeploymentSpecification"] = parsedYaml as string;
-
-    const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
-    const transformedArray = [];
-    for (const path in originalJSON) {
-      // Create a new object with the desired structure
-      const transformedObject = {
-        "@id": `${koItem["@id"]}${path}`,
-        "post": originalJSON[path]["post"],
-      };
-      transformedArray.push(transformedObject);
-    }
-    metadata["hasDeploymentSpecification"] = JSON.parse(
-      JSON.stringify(transformedArray, null),
-    );
 
     metadata.status = "loaded";
   } catch (error) {
     metadata.error = error.message;
   }
-  metadata["local_url"] = cacheFolder;
+  metadata["local_url"] = local_url;
   metadata["url"] = koItem.url;
 
   //add metadata to manifest
@@ -161,11 +122,63 @@ async function loadKO(koItem: Record<string, string>) {
  * install ko from koItem.local_url
  */
 async function installKO(koItem: Record<string, string>) {
-  //add deployment info to manifest
+  //use deployment data to get endpoints
+  const cacheFolder = join(
+    collection_path,
+    koItem["local_url"],
+  );
+  let artifact_location = cacheFolder;
+  let deployment_file_location = join(
+    cacheFolder,
+    koItem["hasDeploymentSpecification"] ?? "deployment.yaml",
+  );
+  if (koItem["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+    type Data = {
+      "@id": string;
+      "@type"?: string | string[];
+      serviceSpec?: string;
+      dependsOn?: string;
+      implementedBy: { "@id": string; "@type": string };
+    };
+    const services: Data[] = koItem["hasService"] as unknown as Data[];
+    for (const item of services) {
+      if (
+        item["@type"] === "API" &&
+        item.implementedBy["@type"] === "org.kgrid.javascript-activator"
+      ) {
+        deployment_file_location = join(
+          cacheFolder,
+          item["implementedBy"]["@id"],
+          item["hasDeploymentSpecification"] ?? "deployment.yaml",
+        );
+        artifact_location = join(
+          cacheFolder,
+          item["implementedBy"]["@id"],
+        );
+        break;
+      }
+    }
+  }
+  const yamlContent = await Deno.readTextFile(
+    deployment_file_location,
+  );
+
+  const parsedYaml = parse(yamlContent);
+  const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
+  const transformedArray = [];
+  for (const path in originalJSON) {
+    // Create a new object with the desired structure
+    const transformedObject = {
+      "@id": `${koItem["@id"]}${path}`,
+      "post": originalJSON[path]["post"],
+    };
+    transformedArray.push(transformedObject);
+  }
 
   const endpoints = JSON.parse(
-    JSON.stringify(koItem.hasDeploymentSpecification),
+    JSON.stringify(transformedArray, null),
   );
+
   let all_endpoints_activated = true;
   for (const route in endpoints) {
     try {
@@ -174,13 +187,17 @@ async function installKO(koItem: Record<string, string>) {
       ) {
         return;
       }
+
       const artifact = endpoints[route].post.engine.artifact;
       const function_name = endpoints[route].post.engine.function;
-      const importedFunction =
-        (await import(join(Deno.cwd(), koItem.local_url, artifact)))[
-          function_name
-        ];
 
+      let module_path = join(artifact_location, artifact);
+      if (!path.isAbsolute(module_path)) {
+        module_path = join(Deno.cwd(), module_path);
+      }
+      const importedFunction = (await import(module_path))[
+        function_name
+      ];
       endpoints[route]["function"] = importedFunction;
       routing_dictionary[endpoints[route]["@id"]] = endpoints[route];
     } catch (error) {
@@ -198,11 +215,7 @@ export async function start_up() {
   console.info(">>>>>> running startup event");
 
   //set collection path
-  collection_path =
-    Deno.env.get("ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH") ?? "";
-  if (collection_path == "" || undefined) {
-    collection_path = "./shelf";
-  }
+  collection_path = set_collection_path();
 
   //set manifest path
   let has_input_manifest = true;
@@ -263,5 +276,3 @@ export async function start_up() {
     console.error("An error occurred:", error.message);
   }
 }
-
-//await start_up();

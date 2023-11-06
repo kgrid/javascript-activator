@@ -141,24 +141,35 @@ async function installKO(koItem: Record<string, string>) {
       implementedBy: { "@id": string; "@type": string };
     };
     const services: Data[] = koItem["hasService"] as unknown as Data[];
-    for (const item of services) {
+    for (const service of services) {
       if (
-        item["@type"] === "API" &&
-        item.implementedBy["@type"] === "org.kgrid.javascript-activator"
+        service["@type"] === "API"
       ) {
-        deployment_file_location = join(
-          cacheFolder,
-          item["implementedBy"]["@id"],
-          item["hasDeploymentSpecification"] ?? "deployment.yaml",
-        );
-        artifact_location = join(
-          cacheFolder,
-          item["implementedBy"]["@id"],
-        );
-        break;
+        const implementations = service["implementedBy"];
+        for (const implementation in implementations) {
+          if (
+            implementations[implementation]["@type"] ===
+              "org.kgrid.javascript-activator"
+          ) {
+            deployment_file_location = join(
+              cacheFolder,
+              service["@id"],
+              implementations[implementation]["@id"],
+              implementations[implementation]["hasDeploymentSpecification"] ??
+                "deployment.yaml",
+            );
+            artifact_location = join(
+              cacheFolder,
+              service["@id"],
+              implementations[implementation]["@id"],
+            );
+            break;
+          }
+        }
       }
     }
   }
+
   const yamlContent = await Deno.readTextFile(
     deployment_file_location,
   );
@@ -195,6 +206,7 @@ async function installKO(koItem: Record<string, string>) {
       if (!path.isAbsolute(module_path)) {
         module_path = join(Deno.cwd(), module_path);
       }
+
       const importedFunction = (await import(module_path))[
         function_name
       ];

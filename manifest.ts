@@ -153,14 +153,12 @@ async function installKO(koItem: Record<string, string>) {
           ) {
             deployment_file_location = join(
               cacheFolder,
-              service["@id"],
               implementations[implementation]["@id"],
               implementations[implementation]["hasDeploymentSpecification"] ??
                 "deployment.yaml",
             );
             artifact_location = join(
               cacheFolder,
-              service["@id"],
               implementations[implementation]["@id"],
             );
             break;

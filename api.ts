@@ -215,7 +215,6 @@ function readService(ctx: Context) {
               "org.kgrid.javascript-activator"
           ) {
             service_specification = join(
-              service["@id"],
               service["hasServiceSpecification"] ?? "service.yaml",
             );
             break;

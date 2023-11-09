@@ -94,9 +94,9 @@ async function loadKO(koItem: Record<string, string>) {
     );
     //check if this kgrid version of activator supports this KO's model
     metadata["status"] = "uninitialized";
-    if (!supported_kgrid_ko_model_versions.includes(metadata["kgrid"] || "1")) {
+    if (!supported_kgrid_ko_model_versions.includes(metadata["koio:kgrid"] || "1")) {
       throw new Error(
-        "KOs with kgrid version " + metadata["kgrid"] +
+        "KOs with kgrid version " + metadata["koio:kgrid"] +
           " are not supported in this activator.",
       );
     }
@@ -132,7 +132,7 @@ async function installKO(koItem: Record<string, string>) {
     cacheFolder,
     koItem["hasDeploymentSpecification"] ?? "deployment.yaml",
   );
-  if (koItem["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+  if (koItem["koio:kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
     type Data = {
       "@id": string;
       "@type"?: string | string[];
@@ -140,7 +140,7 @@ async function installKO(koItem: Record<string, string>) {
       dependsOn?: string;
       implementedBy: { "@id": string; "@type": string };
     };
-    const services: Data[] = koItem["hasService"] as unknown as Data[];
+    const services: Data[] = koItem["koio:hasService"] as unknown as Data[];
     for (const service of services) {
       if (
         service["@type"] === "API"
@@ -149,7 +149,7 @@ async function installKO(koItem: Record<string, string>) {
         for (const implementation in implementations) {
           if (
             implementations[implementation]["@type"] ===
-              "org.kgrid.javascript-activator"
+              "koio:org.kgrid.javascript-activator"
           ) {
             deployment_file_location = join(
               cacheFolder,

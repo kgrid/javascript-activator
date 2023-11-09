@@ -196,7 +196,7 @@ function readService(ctx: Context) {
   let service_specification = manifest[koIndex]["hasServiceSpecification"] ||
     "service.yaml";
 
-  if (manifest[koIndex]["kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+  if (manifest[koIndex]["koio:kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
     type Data = {
       "@id": string;
       "@type"?: string | string[];
@@ -205,14 +205,14 @@ function readService(ctx: Context) {
       implementedBy: { "@id": string; "@type": string };
     };
     const services: Data[] =
-      manifest[koIndex]["hasService"] as unknown as Data[];
+      manifest[koIndex]["koio:hasService"] as unknown as Data[];
     for (const service of services) {
       if (service["@type"] === "API") {
         const implementations = service["implementedBy"];
         for (const implementation in implementations) {
           if (
             implementations[implementation]["@type"] ===
-              "org.kgrid.javascript-activator"
+              "koio:org.kgrid.javascript-activator"
           ) {
             service_specification = join(
               service["hasServiceSpecification"] ?? "service.yaml",

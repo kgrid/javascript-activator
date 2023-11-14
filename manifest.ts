@@ -8,6 +8,7 @@ import {
   set_collection_path,
   unzip,
 } from "./load.ts";
+import jsonld from "https://cdn.skypack.dev/jsonld";
 
 let manifest_path = "";
 let collection_path = "./shelf";
@@ -94,7 +95,9 @@ async function loadKO(koItem: Record<string, string>) {
     );
     //check if this kgrid version of activator supports this KO's model
     metadata["status"] = "uninitialized";
-    if (!supported_kgrid_ko_model_versions.includes(metadata["koio:kgrid"] || "1")) {
+    if (
+      !supported_kgrid_ko_model_versions.includes(metadata["koio:kgrid"] || "1")
+    ) {
       throw new Error(
         "KOs with kgrid version " + metadata["koio:kgrid"] +
           " are not supported in this activator.",
@@ -151,16 +154,33 @@ async function installKO(koItem: Record<string, string>) {
             implementations[implementation]["@type"] ===
               "koio:org.kgrid.javascript-activator"
           ) {
-            deployment_file_location = join(
-              cacheFolder,
-              implementations[implementation]["@id"],
-              implementations[implementation]["hasDeploymentSpecification"] ??
+            // load context
+            const response = await fetch(koItem["@context"]);
+            let context = undefined;
+            if (response.ok) {
+              const fileContent = await response.text();
+              context = JSON.parse(fileContent);
+
+              // add @base to context
+              context["@context"]["@base"] = path.join(cacheFolder, " ");
+            } else {
+              console.error(
+                `Error fetching the context file. Status code: ${response.status}`,
+              );
+            }
+
+            // expand implementation
+            await jsonld.expand({
+              "@context": context["@context"],
+              ...implementations[implementation],
+            }).then((expanded) => {
+              // use resolved implementation id
+              deployment_file_location = join(
+                expanded[0]["@id"],
                 "deployment.yaml",
-            );
-            artifact_location = join(
-              cacheFolder,
-              implementations[implementation]["@id"],
-            );
+              );
+              artifact_location = expanded[0]["@id"];
+            });
             break;
           }
         }

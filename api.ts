@@ -1,11 +1,12 @@
 import {
   Application,
+  Context,
   existsSync,
   join,
   parse,
   parseFlags,
+  path,
   Router,
-  Context,
   send,
   Status,
 } from "./deps.ts";
@@ -17,6 +18,7 @@ import {
   KONotFoundError,
 } from "./exceptions.ts";
 import { set_collection_path } from "./load.ts";
+import jsonld from "https://cdn.skypack.dev/jsonld";
 
 let manifest: { [key: string]: string }[] = [{}];
 let routing_dictionary: {
@@ -183,18 +185,23 @@ app.use(router.allowedMethods());
 // Start the server
 const { args } = Deno;
 const argPort = parseFlags(args).port;
-const port = argPort ? Number(argPort) : 3003;
+const port = argPort ? Number(argPort) : 3002;
 console.info(`Server is running on http://localhost:${port}`);
 await app.listen({ port });
 
-function readService(ctx: Context) {
+async function readService(ctx: Context) {
   const capturedPath = ctx.params.ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
   if (koIndex == -1) {
     throw new KONotFoundError(`KeyError: Key '${capturedPath}' not found.`);
   }
-  let service_specification = manifest[koIndex]["hasServiceSpecification"] ||
+  const service_specification = manifest[koIndex]["hasServiceSpecification"] ||
     "service.yaml";
+  let specPath = join(
+    collection_path,
+    manifest[koIndex]["local_url"],
+    service_specification,
+  );
 
   if (manifest[koIndex]["koio:kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
     type Data = {
@@ -214,20 +221,41 @@ function readService(ctx: Context) {
             implementations[implementation]["@type"] ===
               "koio:org.kgrid.javascript-activator"
           ) {
-            service_specification = join(
-              service["hasServiceSpecification"] ?? "service.yaml",
-            );
+            // load context
+            const response = await fetch(manifest[koIndex]["@context"]);
+            let context = undefined;
+            if (response.ok) {
+              const fileContent = await response.text();
+              context = JSON.parse(fileContent);
+
+              // add @base to context
+              context["@context"]["@base"] = path.join(
+                collection_path,
+                manifest[koIndex]["local_url"],
+                " ",
+              );
+            } else {
+              console.error(
+                `Error fetching the context file. Status code: ${response.status}`,
+              );
+            }
+
+            // exoand the service using the context
+            await jsonld.expand({ "@context": context["@context"], ...service })
+              .then((expanded) => {
+                // use resolved hasServiceSpcification
+                specPath =
+                  expanded[0]["http://kgrid.org/koio#hasServiceSpcification"][
+                    0
+                  ]["@id"];
+              });
+
             break;
           }
         }
       }
     }
   }
-  const specPath = join(
-    collection_path,
-    manifest[koIndex]["local_url"],
-    service_specification,
-  );
 
   if (!existsSync(specPath)) {
     throw new FileNotFoundError(

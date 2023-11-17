@@ -193,23 +193,30 @@ async function installKO(koItem: Record<string, string>) {
     // if has no value means it is a kgrid 2 object with no python service
     return;
   }
-
-  const yamlContent = await Deno.readTextFile(
-    deployment_file_location,
-  );
-
-  const parsedYaml = parse(yamlContent);
-  const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
   const transformedArray = [];
-  for (const path in originalJSON) {
-    // Create a new object with the desired structure
-    const transformedObject = {
-      "@id": `${koItem["@id"]}${path}`,
-      "post": originalJSON[path]["post"],
-    };
-    transformedArray.push(transformedObject);
-  }
+  
+  try{
+    const yamlContent = await Deno.readTextFile(
+      deployment_file_location,
+    );
 
+    const parsedYaml = parse(yamlContent);
+    const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
+    
+    for (const path in originalJSON) {
+      // Create a new object with the desired structure
+      const transformedObject = {
+        "@id": `${koItem["@id"]}${path}`,
+        "post": originalJSON[path]["post"],
+      };
+      transformedArray.push(transformedObject);
+    }
+  } catch (error) {
+    koItem["error"] = error.message;
+    console.error(error);
+    return;
+  }
+  
   const endpoints = JSON.parse(
     JSON.stringify(transformedArray, null),
   );

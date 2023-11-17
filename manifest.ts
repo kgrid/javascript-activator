@@ -136,6 +136,7 @@ async function installKO(koItem: Record<string, string>) {
     koItem["hasDeploymentSpecification"] ?? "deployment.yaml",
   );
   if (koItem["koio:kgrid"] == "2") { //KO model kgrid version 2's specific code to read services
+    deployment_file_location = ""; // reinitialize for kgrid 2 objects
     type Data = {
       "@id": string;
       "@type"?: string | string[];
@@ -186,6 +187,11 @@ async function installKO(koItem: Record<string, string>) {
         }
       }
     }
+  }
+
+  if (deployment_file_location == "") {
+    // if has no value means it is a kgrid 2 object with no python service
+    return;
   }
 
   const yamlContent = await Deno.readTextFile(

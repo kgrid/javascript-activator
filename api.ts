@@ -139,8 +139,8 @@ router.post("/endpoints/:endpoint_path*", async (ctx) => {
 });
 
 //Provide access to service.yaml for each ko at /kos/{ko_id}/service
-router.get("/kos/:ko_id*/service", (ctx) => {
-  const openapiSpec = readService(ctx);
+router.get("/kos/:ko_id*/service", async (ctx) => {
+  const openapiSpec = await readService(ctx);
   ctx.response.type = "application/yaml"; //Serve the requested OpenAPI specification as YAML
   ctx.response.body = openapiSpec;
 });
@@ -157,7 +157,7 @@ router.get("/kos", (ctx) => {
 
 //Provide access to OpenAPI documentation using swagger editir for each ko at /kos/{ko_id}/doc
 router.get("/kos/:ko_id*/doc", async (ctx) => {
-  const openapiSpec = readService(ctx);
+  const openapiSpec = await readService(ctx);
   const apiDoc = parse(openapiSpec);
   const html = await Deno.readTextFile("public/index.html");
   ctx.response.type = "text/html";

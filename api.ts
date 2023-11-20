@@ -217,9 +217,7 @@ async function readService(ctx: Context) {
       if (service["@type"] === "API") {
         const implementations = service["implementedBy"];
         for (const implementation in implementations) {
-          if (
-            implementations[implementation]["@type"] ===
-              "koio:org.kgrid.javascript-activator"
+          if ( implementations[implementation]["@type"] && implementations[implementation]["@type"].includes("https://kgrid.org/specs/activationSpec.html#object")  && implementations[implementation]["@type"].includes("javascript")
           ) {
             // load context
             const response = await fetch(manifest[koIndex]["@context"]);

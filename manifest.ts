@@ -151,22 +151,29 @@ async function installKO(koItem: Record<string, string>) {
       ) {
         const implementations = service["implementedBy"];
         for (const implementation in implementations) {
-          if ( implementations[implementation]["@type"] && implementations[implementation]["@type"].includes("https://kgrid.org/specs/activationSpec.html#object")  && implementations[implementation]["@type"].includes("javascript")
+          if (
+            implementations[implementation]["@type"] &&
+            implementations[implementation]["@type"].includes(
+              "https://kgrid.org/specs/activationSpec.html#object",
+            ) && implementations[implementation]["@type"].includes("javascript")
           ) {
             // load context
-            const response = await fetch(koItem["@context"]);
-            let context = undefined;
-            if (response.ok) {
-              const fileContent = await response.text();
-              context = JSON.parse(fileContent);
-
-              // add @base to context
-              context["@context"]["@base"] = path.join(cacheFolder, " ");
-            } else {
-              console.error(
-                `Error fetching the context file. Status code: ${response.status}`,
-              );
+            let context = { "@context": koItem["@context"] };
+            if (String(koItem["@context"]).includes(".jsonld")) {
+              const response = await fetch(koItem["@context"]);
+              if (response.ok) {
+                const fileContent = await response.text();
+                context = JSON.parse(fileContent);
+              } else {
+                console.error(
+                  `Error fetching the context file. Status code: ${response.status}`,
+                );
+                continue;
+              }
             }
+
+            // add @base to context
+            context["@context"]["@base"] = path.join(cacheFolder, " ");
 
             // expand implementation
             await jsonld.expand({
@@ -192,15 +199,15 @@ async function installKO(koItem: Record<string, string>) {
     return;
   }
   const transformedArray = [];
-  
-  try{
+
+  try {
     const yamlContent = await Deno.readTextFile(
       deployment_file_location,
     );
 
     const parsedYaml = parse(yamlContent);
     const originalJSON = JSON.parse(JSON.stringify(parsedYaml));
-    
+
     for (const path in originalJSON) {
       // Create a new object with the desired structure
       const transformedObject = {
@@ -214,7 +221,7 @@ async function installKO(koItem: Record<string, string>) {
     console.error(error);
     return;
   }
-  
+
   const endpoints = JSON.parse(
     JSON.stringify(transformedArray, null),
   );

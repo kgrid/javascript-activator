@@ -217,26 +217,33 @@ async function readService(ctx: Context) {
       if (service["@type"] === "API") {
         const implementations = service["implementedBy"];
         for (const implementation in implementations) {
-          if ( implementations[implementation]["@type"] && implementations[implementation]["@type"].includes("https://kgrid.org/specs/activationSpec.html#object")  && implementations[implementation]["@type"].includes("javascript")
+          if (
+            implementations[implementation]["@type"] &&
+            implementations[implementation]["@type"].includes(
+              "https://kgrid.org/specs/activationSpec.html#object",
+            ) && implementations[implementation]["@type"].includes("javascript")
           ) {
             // load context
-            const response = await fetch(manifest[koIndex]["@context"]);
-            let context = undefined;
-            if (response.ok) {
-              const fileContent = await response.text();
-              context = JSON.parse(fileContent);
-
-              // add @base to context
-              context["@context"]["@base"] = path.join(
-                collection_path,
-                manifest[koIndex]["local_url"],
-                " ",
-              );
-            } else {
-              console.error(
-                `Error fetching the context file. Status code: ${response.status}`,
-              );
+            let context = { "@context": manifest[koIndex]["@context"] };
+            if (String(manifest[koIndex]["@context"]).includes(".jsonld")) {
+              const response = await fetch(manifest[koIndex]["@context"]);
+              if (response.ok) {
+                const fileContent = await response.text();
+                context = JSON.parse(fileContent);
+              } else {
+                console.error(
+                  `Error fetching the context file. Status code: ${response.status}`,
+                );
+                continue;
+              }
             }
+
+            // add @base to context
+            context["@context"]["@base"] = path.join(
+              collection_path,
+              manifest[koIndex]["local_url"],
+              " ",
+            );
 
             // exoand the service using the context
             await jsonld.expand({ "@context": context["@context"], ...service })

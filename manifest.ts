@@ -247,10 +247,10 @@ async function installKO(koItem: Record<string, string>) {
       //const isCompiled = Deno.env.get("DENO_ENV") === "compiled";
 
       //if (isCompiled) {
-        importedModule = await dynamicImport(module_path);
+        //importedModule = await dynamicImport(module_path);
       // }
       // else{
-      //   importedModule = await import(module_path);
+         importedModule = await import(module_path);
 
       // }
 

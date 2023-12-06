@@ -1,1 +1,1 @@
-web: deno run --allow-net --allow-env --allow-read --allow-write --allow-run api.ts --port=${PORT} 
+web: deno run --allow-net=github.com,objects.githubusercontent.com,kgrid.org,0.0.0.0:3001 --allow-env --allow-read --allow-write --allow-run=unzip --allow-sys=osRelease api.ts --port=${PORT} 

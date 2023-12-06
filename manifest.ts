@@ -244,15 +244,15 @@ async function installKO(koItem: Record<string, string>) {
       }
       
       let importedModule=null;
-      //const isCompiled = Deno.env.get("DENO_ENV") === "compiled";
+      const isCompiled = Deno.env.get("DENO_ENV") === "compiled";
 
-      //if (isCompiled) {
-        //importedModule = await dynamicImport(module_path);
-      // }
-      // else{
+      if (isCompiled) {
+        importedModule = await dynamicImport(module_path);
+      }
+      else{
          importedModule = await import(module_path);
 
-      // }
+      }
 
       const importedFunction=importedModule[function_name];
       endpoints[route]["function"] = importedFunction;

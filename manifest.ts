@@ -1,5 +1,5 @@
 /// <reference lib="deno.ns" />
-import { existsSync, isURL, join, parse, path } from "./deps.ts";
+import { existsSync, isURL, join, parse, path, dynamicImport } from "./deps.ts";
 import {
   download,
   getFilenameFromURL,
@@ -142,7 +142,7 @@ async function installKO(koItem: Record<string, string>) {
       "@type"?: string | string[];
       serviceSpec?: string;
       dependsOn?: string;
-      implementedBy: { "@id": string; "@type": string };
+      implementedBy: [{ "@id": string; "@type": string }];
     };
     const services: Data[] = koItem["koio:hasService"] as unknown as Data[];
     for (const service of services) {
@@ -242,10 +242,19 @@ async function installKO(koItem: Record<string, string>) {
       if (!path.isAbsolute(module_path)) {
         module_path = join(Deno.cwd(), module_path);
       }
+      
+      let importedModule=null;
+      const isCompiled = Deno.env.get("DENO_ENV") === "compiled";
 
-      const importedFunction = (await import(module_path))[
-        function_name
-      ];
+      if (isCompiled) {
+        importedModule = await dynamicImport(module_path);
+      }
+      else{
+        importedModule = await import(module_path);
+
+      }
+
+      const importedFunction=importedModule[function_name];
       endpoints[route]["function"] = importedFunction;
       routing_dictionary[endpoints[route]["@id"]] = endpoints[route];
     } catch (error) {

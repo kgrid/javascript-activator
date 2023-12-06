@@ -1,6 +1,5 @@
 import {
   Application,
-  Context,
   existsSync,
   join,
   parse,
@@ -140,7 +139,7 @@ router.post("/endpoints/:endpoint_path*", async (ctx) => {
 
 //Provide access to service.yaml for each ko at /kos/{ko_id}/service
 router.get("/kos/:ko_id*/service", async (ctx) => {
-  const openapiSpec = await readService(ctx);
+  const openapiSpec = await readService(ctx.params.ko_id);
   ctx.response.type = "application/yaml"; //Serve the requested OpenAPI specification as YAML
   ctx.response.body = openapiSpec;
 });
@@ -157,7 +156,7 @@ router.get("/kos", (ctx) => {
 
 //Provide access to OpenAPI documentation using swagger editir for each ko at /kos/{ko_id}/doc
 router.get("/kos/:ko_id*/doc", async (ctx) => {
-  const openapiSpec = await readService(ctx);
+  const openapiSpec = await readService(ctx.params.ko_id);
   const apiDoc = parse(openapiSpec);
   const html = await Deno.readTextFile("public/index.html");
   ctx.response.type = "text/html";
@@ -185,12 +184,12 @@ app.use(router.allowedMethods());
 // Start the server
 const { args } = Deno;
 const argPort = parseFlags(args).port;
-const port = argPort ? Number(argPort) : 3002;
+const port = argPort ? Number(argPort) : 3000;
 console.info(`Server is running on http://localhost:${port}`);
 await app.listen({ port });
 
-async function readService(ctx: Context) {
-  const capturedPath = ctx.params.ko_id || "";
+async function readService(ko_id: string | undefined ) {
+  const capturedPath = ko_id || "";
   const koIndex = manifest.findIndex((item) => item["@id"] === capturedPath);
   if (koIndex == -1) {
     throw new KONotFoundError(`KeyError: Key '${capturedPath}' not found.`);
@@ -209,7 +208,7 @@ async function readService(ctx: Context) {
       "@type"?: string | string[];
       serviceSpec?: string;
       dependsOn?: string;
-      implementedBy: { "@id": string; "@type": string };
+      implementedBy: [{ "@id": string; "@type": string }];
     };
     const services: Data[] =
       manifest[koIndex]["koio:hasService"] as unknown as Data[];

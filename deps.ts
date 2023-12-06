@@ -5,7 +5,6 @@ export { parse, stringify } from "https://deno.land/std@0.202.0/yaml/mod.ts";
 export { join } from "https://deno.land/std/path/mod.ts";
 export {
   Application,
-  Context,
   Router,
   send,
   Status,
@@ -13,3 +12,4 @@ export {
 export { parse as parseFlags } from "https://deno.land/std/flags/mod.ts";
 export { dirname } from "https://deno.land/std@0.202.0/path/dirname.ts";
 export { writeAll } from "https://deno.land/std@0.202.0/streams/write_all.ts";
+export { dynamicImport } from 'https://deno.land/x/import/mod.ts';

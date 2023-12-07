@@ -43,7 +43,7 @@ if (activation_data !== undefined) {
 // Add middleware for redirecting root to /doc
 app.use(async (ctx, next) => {
   if (ctx.request.url.pathname === "/") {
-    ctx.response.redirect("/doc");
+    ctx.response.redirect("/docs");
   } else {
     await next();
   }
@@ -87,7 +87,7 @@ app.use(async (ctx, next) => {
 });
 
 //provide access to OpenAPI documentation using swagger editor for the app APIs at /doc
-router.get("/doc", async (ctx) => {
+router.get("/docs", async (ctx) => {
   const openapi = await Deno.readTextFile("public/openapi.json");
   const html = await Deno.readTextFile("public/index.html");
   ctx.response.type = "text/html";

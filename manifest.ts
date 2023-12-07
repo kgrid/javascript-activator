@@ -61,7 +61,7 @@ async function loadKO(koItem: Record<string, string>) {
     } else koItem.url = resolveRelativeURL(manifest_path, koItem.url);
   }
 
-  //Download to localLocation if not local
+  //Download to local location if not local
   let localLocation = koItem.url;
   let metadata: Record<string, string> = {
     "@id": koItem["@id"],

@@ -31,8 +31,4 @@ export class InvalidInputParameterError extends Error {
   }
   status = Status.InternalServerError; //500
 }
-// class InvalidInputParameterError(HTTPException):
-//     def __init__(self,e):
-//         self.status_code = 500
-//         self.title=self.__class__.__name__
-//         self.detail= repr(e)
+

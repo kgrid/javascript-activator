@@ -160,8 +160,8 @@ If a KO has more than one service, this version of JavaScript activator will onl
 If a service has more than one endpoint with the same name, the JavaScript activator will keep and route to the last one.
 
 ## Related links
-- Ontology [validation service](http://iot.ee.surrey.ac.uk/SSNValidation/)
 - [Kgrid Website](https://kgrid.org/)
+- [Knowledge Grid Activator Specifications](https://kgrid.org/specs/activationSpec.html) 
 - [Python Activator](https://github.com/kgrid/python-activator)
 - [kgrid Reference Objects](https://github.com/kgrid/reference-objects)
 - [Kgrid Knowledge Objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md) 

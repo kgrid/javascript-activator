@@ -35,15 +35,14 @@ ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=<path> ORG_KGRID_JAVASCRIPT_ACTIVAT
 
  For examples of this command see [Using reference objects](#using-reference-objects) or [Using other legacy examples](#using-other-legacy-examples)
 
-#### Test the loaded knowledge objects
-Use http://localhost:3001/kos to get the list of knowledge objects and their status.
+### Test the knowledge objects in the running app
+Use http://localhost:3000/kos to get the list of knowledge objects and their status.
 
-#### Test the loaded endpoints of knowledge objects
-Use http://localhost:3001/endpoints to get the endpoints and their status. Each endpoint is accessible via an http POST request (e.g. using postman) to http://localhost:3001/endpoints/{ko id}/{endpoint id}  with a Json body.
+Use http://localhost:3000/endpoints to get the list of endpoints. Each endpoint is accessible via an http POST request (e.g. using postman) to http://localhost:3000/endpoints/{ko id}/{endpoint id}  with a Json body.
 
 For activated KOs that have a service specification, the JavaScript activator provides access to swagger and OpenAPI editor for each activated KO at {server address}/kos/{KO id}/doc.
 
-As an example, once the BMI Calculator KO (in folder bmi-calc-ko with id BMICalculator) from the reference objects is activated, a post request could be sent to `POST http://localhost:3001/endpoints/BMICalculator/bmi` with the following body to use the bmi endpoint 
+As an example, once the BMI Calculator KO (in folder bmi-calc-ko with id BMICalculator) from the reference objects is activated, a post request could be sent to `POST http://localhost:3000/endpoints/BMICalculator/bmi` with the following body to use the bmi endpoint 
 ```json
 {
     "height": 175,
@@ -51,8 +50,7 @@ As an example, once the BMI Calculator KO (in folder bmi-calc-ko with id BMICalc
     "unit_system": "metric"
 }
 ```
-
-swagger editor link "documentation": "http://localhost:3001/kos/BMICalculator/doc" which is provided at http://localhost:3001/kos could also be used to test this KO's endpoint.
+or swagger editor could be accessed at http://localhost:3000/kos/BMICalculator/doc for this KO to test  its endpoint.
 ## Development
 
 ### Setting up the project
@@ -77,9 +75,11 @@ deno fmt
 deno lint
 deno test
 ```
-
+- 'deno fmt' automatically formats and styles the code according to a predefined set of rules. 
+- 'deno lint' analyzes the code for potential errors, coding style violations, and other issues based on a specified set of linting rules.
+- 'deno test' runs unit tests to ensure the correctness of the code
 ### Using reference objects
-This activator supports [kgrid 2.0 Knowledge objects](). This collection has knowledge objects that have API services implemented for JavaScript activator. A [Local Manifest file](https://github.com/kgrid/reference-objects/blob/main/local_manifest.json) is provided in this repository to help loading these KOs from a cloned location. Clone this repository using
+This activator supports [kgrid 2.0 Knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). [Reference Knowledge Objects Collection](https://github.com/kgrid/reference-objects) has knowledge objects that have API services implemented for JavaScript activator. A [Local Manifest file](https://github.com/kgrid/reference-objects/blob/main/local_manifest.json) is provided in this repository to help loading these KOs from a cloned location. Clone this repository using
 
     ```bash
     git clone https://github.com/kgrid/reference-objects.git
@@ -90,15 +90,15 @@ Then run the JavaScript activator and give the path to the cloned repository as 
     ORG_KGRID_JAVASCRIPT_ACTIVATOR_COLLECTION_PATH=/home/code/reference-objects deno run --allow-net=github.com,objects.githubusercontent.com,kgrid.org,0.0.0.0 --allow-env --allow-read --allow-write=shelf/ --allow-run=unzip --allow-sys=osRelease --unstable  api.ts --port=3000
     ```
 ### Using other legacy examples
-The new activator does not support legacy knowledge objects. But examples of kgrid 1.0 knowledge objects that are upgraded to be activated by this version of activator are included in ./tests/fixtures/installfiles/ in this repository. A manifest file is also located in this folder for testing.  
+The new activator does not support legacy knowledge objects. But examples of kgrid 1.0 knowledge objects that are updated to be activated by this version of activator are included in ./tests/fixtures/installfiles/ in this repository. A manifest file is also located in this folder for testing.  
 
 Use the following command, from the root of this repository to deploy these knowledge objects to the JavaScript activator:
 ```bash
-ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.json deno run --allow-net=github.com,objects.githubusercontent.com,kgrid.org,0.0.0.0 --allow-env --allow-read --allow-write=shelf/ --allow-run=unzip --allow-sys=osRelease --unstable  api.ts --port=3001
+ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.json deno run --allow-net=github.com,objects.githubusercontent.com,kgrid.org,0.0.0.0 --allow-env --allow-read --allow-write=shelf/ --allow-run=unzip --allow-sys=osRelease --unstable  api.ts --port=3000
 ```
 
 ## Knowledge Object Development
-The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). kgrid 1.0 knowledge objects, however require some minor update to work with JavaScript activator:
+The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). kgrid 1.0 knowledge objects, however require some minor updates to work with JavaScript activator:
 1. The deployment files need to be restructured using the following example:
     ```
     /{route name}:
@@ -138,7 +138,7 @@ JavaScript activator uses ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH as the en
 
 When using manifest file, this activator only accepts zipped knowledge objects. The local or remote (URL) paths to zip files should be listed on the input manifest. Relative local paths of zip files on the manifest file will be resolved towards the location of the manifest file. 
 
-The JavaScript activator creates an unzipped local copy of KOs and a local manifest file in the cache folder when it activates knowledge objects from a manifest. (See [local manifest file created for reference objects]() as an example of local manifest). To unzip remote zip files, this activator downloads them in the cache folder first.
+The JavaScript activator creates an unzipped local copy of KOs and a local manifest file in the cache folder when it activates knowledge objects from a manifest. (See [local manifest file created for reference objects](https://github.com/kgrid/reference-objects/blob/main/local_manifest.json) as an example of local manifest). To unzip remote zip files, this activator downloads them in the cache folder first.
 
 If no manifest path is provided, JAVASCRIPT activator can activate knowledge objects from a local cache that contains unzipped knowledge objects and the local manifest. 
 
@@ -158,3 +158,11 @@ The JavaScript activator provides access to service specification file at {serve
 If a KO has more than one service, this version of JavaScript activator will only activate the last service.
 
 If a service has more than one endpoint with the same name, the JavaScript activator will keep and route to the last one.
+
+## Related links
+- Ontology [validation service](http://iot.ee.surrey.ac.uk/SSNValidation/)
+- [Kgrid Website](https://kgrid.org/)
+- [Python Activator](https://github.com/kgrid/python-activator)
+- [kgrid Reference Objects](https://github.com/kgrid/reference-objects)
+- [Kgrid Knowledge Objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md) 
+- [Knowledge Object Implementation Ontology (KOIO)](https://github.com/kgrid/koio)

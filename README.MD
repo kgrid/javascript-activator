@@ -123,6 +123,31 @@ export function welcome(inputs) {
   return "Welcome to Knowledge Grid, " + name;
 }
 ```
+
+JavaScript exhibits a high tolerance for implicit type conversions. Silent failure occurs when certain operations involving undefined or non-numeric values result in NaN, enabling the program to continue execution without throwing explicit exceptions. 
+
+These characteristics makes it impossible for JavaScript activator to catch and report the right error related to issues of the KO function input parameters. Therefore, an input validation process must be implemented as part of the KO service implementation that would check input parameters and would throw an error (exception) with a relevant message, reporting the issue with the input parameters. 
+
+Here is an example of such mechanisms that validates the input types:
+```JavaScript
+export function bmi_category(input:any):string{
+    const example={
+        weight:1.0,
+        height:1.0,
+        unit_system:"string"
+    }
+    validate_type(input,example);
+    //... service implementation goes here
+}
+
+function validate_type(input:any,type_obj:any){
+    for (const key in type_obj){
+          if((typeof input[key]) != (typeof type_obj[key])){
+                throw new Error("Invalid type");
+          }
+    }
+}
+```
 ## Deployment
 A Procfile is needed for Heroku deployment with the following content
 ```

@@ -70,7 +70,7 @@ code .
 
 before pushing commits run the following commands:
 
-```
+```bash
 deno fmt
 deno lint
 deno test
@@ -100,7 +100,7 @@ ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.js
 ## Knowledge Object Development
 The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). kgrid 1.0 knowledge objects, however require some minor updates to work with JavaScript activator:
 1. The deployment files need to be restructured using the following example:
-    ```
+    ```yaml
     /{route name}:
     post:    
         engine: 
@@ -110,14 +110,14 @@ The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.c
     ```
 2. The function listed in deployment file should be tagged with keyword export in the artifact where it is implemented.    
 3. the server field of the service specification file should contain the value with the following format:
-    ```
+    ```bash
     servers:
     - url: /endpoints/{ko_id}
     ```
 
 For kgrid 2.0 knowledge objects, the JavaScript implementation of API services should  be implemented as a js function. To make the function accessible from outside the module, you should explicitly export it using the 'export' keyword. Here is an example:
 
-```
+```JavaScript
 export function welcome(inputs) {
   let name = inputs.name;
   return "Welcome to Knowledge Grid, " + name;
@@ -150,7 +150,7 @@ function validate_type(input:any,type_obj:any){
 ```
 ## Deployment
 A Procfile is needed for Heroku deployment with the following content
-```
+```bash
 web: deno run --allow-net=github.com,objects.githubusercontent.com,kgrid.org,0.0.0.0 --allow-env --allow-read --allow-write --allow-run=unzip --allow-sys=osRelease api.ts --port=${PORT}  
 ```
 

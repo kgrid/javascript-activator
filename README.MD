@@ -102,11 +102,11 @@ The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.c
 1. The deployment files need to be restructured using the following example:
     ```yaml
     /{route name}:
-    post:    
+      post:    
         engine: 
-        name: org.kgrid.javascript-activator
-        artifact: {artifact name}
-        function: {function name}
+          name: org.kgrid.javascript-activator
+          artifact: {artifact name}
+          function: {function name}
     ```
 2. The function listed in deployment file should be tagged with keyword export in the artifact where it is implemented.    
 3. the server field of the service specification file should contain the value with the following format:

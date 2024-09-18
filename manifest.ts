@@ -147,6 +147,7 @@ async function installKO(koItem: Record<string, string>) {
     const services: Data[] = koItem["koio:hasService"] as unknown as Data[];
     for (const service of services) {
       if (
+        (Array.isArray(service["@type"]) && service["@type"].includes("API")) ||
         service["@type"] === "API"
       ) {
         const implementations = service["implementedBy"];
@@ -155,11 +156,11 @@ async function installKO(koItem: Record<string, string>) {
             implementations[implementation]["@type"] &&
             implementations[implementation]["@type"].includes(
               "https://kgrid.org/specs/activationSpec.html#object",
-            ) && implementations[implementation]["@type"].includes("javascript")
+            ) && implementations[implementation]["@type"].some(item => item.toLowerCase() === "javascript")
           ) {
             // load context
             let context = { "@context": koItem["@context"] };
-            if (String(koItem["@context"]).includes(".jsonld")) {
+            if (typeof koItem["@context"] === "string" ) {
               const response = await fetch(koItem["@context"]);
               if (response.ok) {
                 const fileContent = await response.text();

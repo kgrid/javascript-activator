@@ -79,7 +79,7 @@ deno test
 - 'deno lint' analyzes the code for potential errors, coding style violations, and other issues based on a specified set of linting rules.
 - 'deno test' runs unit tests to ensure the correctness of the code
 ### Using reference objects
-This activator supports [kgrid 2.0 Knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). [Reference Knowledge Objects Collection](https://github.com/kgrid/reference-objects) has knowledge objects that have API services implemented for JavaScript activator. A [Local Manifest file](https://github.com/kgrid/reference-objects/blob/main/local_manifest.json) is provided in this repository to help loading these KOs from a cloned location. Clone this repository using
+This activator supports [kgrid 2.0 Knowledge objects](https://github.com/kgrid/specs/blob/master/docs/kgrid-knowledge-objects.md). [Reference Knowledge Objects Collection](https://github.com/kgrid/reference-objects) has knowledge objects that have API services implemented for JavaScript activator. A [Local Manifest file](https://github.com/kgrid/reference-objects/blob/main/local_manifest.json) is provided in this repository to help loading these KOs from a cloned location. Clone this repository using
 
     ```bash
     git clone https://github.com/kgrid/reference-objects.git
@@ -98,7 +98,7 @@ ORG_KGRID_JAVASCRIPT_ACTIVATOR_MANIFEST_PATH=./fixtures/installfiles/manifest.js
 ```
 
 ## Knowledge Object Development
-The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md). kgrid 1.0 knowledge objects, however require some minor updates to work with JavaScript activator:
+The JavaScript activator supports [kgrdi 2.0 knowledge objects](https://github.com/kgrid/specs/blob/master/docs/kgrid-knowledge-objects.md). kgrid 1.0 knowledge objects, however require some minor updates to work with JavaScript activator:
 1. The deployment files need to be restructured using the following example:
     ```yaml
     /{route name}:
@@ -189,5 +189,5 @@ If a service has more than one endpoint with the same name, the JavaScript activ
 - [Knowledge Grid Activator Specifications](https://kgrid.org/specs/activationSpec.html) 
 - [Python Activator](https://github.com/kgrid/python-activator)
 - [kgrid Reference Objects](https://github.com/kgrid/reference-objects)
-- [Kgrid Knowledge Objects](https://github.com/kgrid/koio/blob/master/kgrid_knowledge_objects.md) 
+- [Kgrid Knowledge Objects](https://github.com/kgrid/specs/blob/master/docs/kgrid-knowledge-objects.md) 
 - [Knowledge Object Implementation Ontology (KOIO)](https://github.com/kgrid/koio)

@@ -127,7 +127,7 @@ router.post("/endpoints/:endpoint_path*", async (ctx) => {
   }
 
   try {
-    const input = await ctx.request.body().value;
+    const input = await ctx.request.body.json();
     ctx.response.body = {
       "result": routing_dictionary[capturedPath].function(input),
       "info": { endpoint: routing_dictionary[capturedPath], "inputs": input },
@@ -213,18 +213,21 @@ async function readService(ko_id: string | undefined ) {
     const services: Data[] =
       manifest[koIndex]["koio:hasService"] as unknown as Data[];
     for (const service of services) {
-      if (service["@type"] === "API") {
+      if (
+        (Array.isArray(service["@type"]) && service["@type"].includes("API")) ||
+        service["@type"] === "API"
+      ) {
         const implementations = service["implementedBy"];
         for (const implementation in implementations) {
           if (
             implementations[implementation]["@type"] &&
             implementations[implementation]["@type"].includes(
               "https://kgrid.org/specs/activationSpec.html#object",
-            ) && implementations[implementation]["@type"].includes("javascript")
+            ) && implementations[implementation]["@type"].some(item => item.toLowerCase() === "javascript")
           ) {
             // load context
             let context = { "@context": manifest[koIndex]["@context"] };
-            if (String(manifest[koIndex]["@context"]).includes(".jsonld")) {
+            if (typeof manifest[koIndex]["@context"] === "string") {
               const response = await fetch(manifest[koIndex]["@context"]);
               if (response.ok) {
                 const fileContent = await response.text();
